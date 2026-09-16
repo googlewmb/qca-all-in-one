@@ -1,4 +1,4 @@
-name: immortalwrt-nss
+name: ImmortalWrt-NSS
 
 on:
   workflow_dispatch:
@@ -9,251 +9,212 @@ permissions:
   contents: write
 
 env:
-  OPENWRT_NAME: immortalwrt-nss
-  REPO: googlewmb/Actions-OpenWrt
-  REPO_URL: https://github.com/LiBwrt/LibWrt
-  REPO_BRANCH: 25.12-nss
-  CONFIG_BUILD: nss/immortalwrt/ipq807x.config
-  CONFIG_FILE: nss/immortalwrt/.config
   DIY_P1_SH: nss/diy-part1.sh
   DIY_P2_SH: nss/diy-part2.sh
-  UPLOAD_BIN: true
-  UPLOAD_FIRMWARE: true
-  UPLOAD_RELEASE: true
   TZ: Asia/Shanghai
 
 jobs:
   build:
+    name: 编译 ${{ matrix.name }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: IPQ807x
+            repo_url: https://github.com/LiBwrt/LibWrt
+            repo_branch: 25.12-nss
+            config: nss/immortalwrt/ipq807x.config
+            config_final: nss/immortalwrt/ipq807x.config.final
+
+          # - name: H68K
+          #   repo_url: https://github.com/LiBwrt/LibWrt
+          #   repo_branch: 25.12-nss
+          #   config: nss/immortalwrt/h68k.config
+          #   config_final: nss/immortalwrt/h68k.config.final
+
+          # - name: X86
+          #   repo_url: https://github.com/immortalwrt/immortalwrt
+          #   repo_branch: master
+          #   config: nss/immortalwrt/x86.config
+          #   config_final: nss/immortalwrt/x86.config.final
+
+    steps:
+      - name: 检出仓库
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: 释放磁盘
+        run: |
+          sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc /opt/hostedtoolcache/CodeQL
+          sudo docker system prune -af || true
+
+      - name: 安装依赖
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential clang flex bison gawk \
+            gcc-multilib g++-multilib gettext git \
+            libncurses-dev libssl-dev python3 \
+            python3-distutils python3-setuptools \
+            rsync unzip zlib1g-dev file wget curl ccache
+
+      - name: 设置时间
+        run: |
+          echo "DATE=$(date +%Y%m%d)" >> "$GITHUB_ENV"
+          echo "DATETIME=$(date '+%Y-%m-%d %H:%M:%S')" >> "$GITHUB_ENV"
+
+      - name: 克隆源码
+        run: |
+          git clone --depth=1 \
+            -b "${{ matrix.repo_branch }}" \
+            "${{ matrix.repo_url }}" openwrt
+
+      - name: DIY 第一阶段
+        run: |
+          [ ! -f "$DIY_P1_SH" ] || bash "$DIY_P1_SH"
+
+      - name: 更新 feeds
+        working-directory: openwrt
+        run: |
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a
+
+      - name: 导入配置
+        run: |
+          test -f "${{ matrix.config }}"
+          cp -f "${{ matrix.config }}" openwrt/.config
+
+      - name: DIY 第二阶段
+        run: |
+          [ ! -f "$DIY_P2_SH" ] || bash "$DIY_P2_SH"
+
+      - name: 生成最终配置
+        working-directory: openwrt
+        run: |
+          make defconfig
+
+      - name: 保存最终配置
+        run: |
+          mkdir -p "final-config/${{ matrix.name }}"
+          cp openwrt/.config \
+            "final-config/${{ matrix.name }}/.config"
+          echo "${{ matrix.config_final }}" \
+            > "final-config/${{ matrix.name }}/TARGET"
+
+      - name: 开始编译
+        working-directory: openwrt
+        run: |
+          make -j$(nproc) download
+          make -j$(nproc) V=s
+
+      - name: 获取设备名称
+        run: |
+          d=$(grep -E '^CONFIG_TARGET_.*_DEVICE_' openwrt/.config \
+            | head -n1 \
+            | sed -E 's/CONFIG_TARGET_([^=]+)=y/' || true)
+          echo "DEVICE_NAME=${d:-${{ matrix.name }}}" >> "$GITHUB_ENV"
+
+      - name: 上传完整编译目录
+        uses: actions/upload-artifact@v7
+        with:
+          name: 编译文件-${{ matrix.name }}-${{ env.DATE }}
+          path: openwrt/bin/
+          retention-days: 7
+          compression-level: 1
+
+      - name: 整理固件
+        run: |
+          mkdir -p firmware
+          cp -a openwrt/bin/targets/. firmware/
+          cp openwrt/.config firmware/.config
+
+      - name: 上传固件
+        uses: actions/upload-artifact@v7
+        with:
+          name: 固件-${{ matrix.name }}-${{ env.DATE }}
+          path: firmware/
+          retention-days: 7
+          compression-level: 1
+
+      - name: 发布 Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ matrix.name }}-${{ env.DATE }}
+          name: "${{ matrix.name }} 固件 ${{ env.DATE }}"
+          body: |
+            ## 编译信息
+
+            项目：${{ matrix.name }}
+            源码：${{ matrix.repo_url }}
+            分支：${{ matrix.repo_branch }}
+            设备：${{ env.DEVICE_NAME }}
+            配置：${{ matrix.config }}
+            最终配置：${{ matrix.config_final }}
+            编译时间：${{ env.DATETIME }}
+
+          files: firmware/**
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 上传最终配置
+        uses: actions/upload-artifact@v7
+        with:
+          name: 最终配置-${{ matrix.name }}
+          path: final-config/${{ matrix.name }}/
+          retention-days: 7
+
+  save-config:
+    name: 保存最终配置
+    needs: build
+    if: always()
     runs-on: ubuntu-latest
 
     steps:
+      - name: 检出仓库
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
-    - name: 释放Ubuntu磁盘空间
-      uses: coder-xiaomo/free-disk-space@main
-      with:
-        tool-cache: false
-        android: true
-        dotnet: true
-        haskell: true
-        large-packages: true
-        docker-images: true
-        swap-storage: true
+      - name: 下载最终配置
+        uses: actions/download-artifact@v5
+        with:
+          pattern: 最终配置-*
+          path: final-configs
+          merge-multiple: false
 
-    - name: 加载项目文件
-      uses: actions/checkout@main
+      - name: 写入最终配置
+        run: |
+          for d in final-configs/最终配置-*; do
+            [ -f "$d/.config" ] || continue
+            [ -f "$d/TARGET" ] || continue
+            t=$(cat "$d/TARGET")
+            mkdir -p "$(dirname "$t")"
+            cp "$d/.config" "$t"
+          done
 
-    - name: 初始化编译环境
-      env:
-        DEBIAN_FRONTEND: noninteractive
-      run: |
-        sudo apt-get update
-        sudo apt-get full-upgrade -y
-        sudo apt-get install -y \
-          ack antlr3 asciidoc autoconf automake autopoint binutils bison \
-          build-essential bzip2 ccache clang cmake cpio curl device-tree-compiler \
-          ecj fastjar flex gawk gettext gcc-multilib g++-multilib git \
-          gnutls-dev gperf haveged help2man intltool lib32gcc-s1 libc6-dev-i386 \
-          libelf-dev libglib2.0-dev libgmp3-dev libltdl-dev libmpc-dev \
-          libmpfr-dev libncurses-dev libpython3-dev libreadline-dev libssl-dev \
-          libtool libyaml-dev libz-dev lld llvm lrzsz mkisofs msmtp nano \
-          ninja-build p7zip p7zip-full patch pkgconf python3 python3-pip \
-          python3-ply python3-docutils python3-pyelftools qemu-utils re2c \
-          rsync scons squashfs-tools subversion swig texinfo uglifyjs \
-          upx-ucl unzip vim wget xmlto xxd zlib1g-dev zstd
-
-    - name: 设置日期
-      run: |
-        sudo timedatectl set-timezone "$TZ"
-        echo "date1=$(date +'%Y.%m.%d-%H.%M')" >> "$GITHUB_ENV"
-        echo "date2=$(date +'%Y.%m.%d')" >> "$GITHUB_ENV"
-        echo "date3=$(date +'%Y年%m月%d日')" >> "$GITHUB_ENV"
-
-    - name: 下载固件源码
-      run: |
-        git clone "$REPO_URL" -b "$REPO_BRANCH" openwrt
-
-    - name: 执行DIY_P1_SH
-      run: |
-        chmod +x "$GITHUB_WORKSPACE/$DIY_P1_SH"
-        cd "$GITHUB_WORKSPACE/openwrt"
-        "$GITHUB_WORKSPACE/$DIY_P1_SH"
-
-    - name: 更新feeds
-      working-directory: ./openwrt
-      run: |
-        ./scripts/feeds update -a
-        ./scripts/feeds install -a
-
-    - name: 加载ipq807x.config并执行DIY_P2_SH
-      run: |
-        set -e
-
-        SOURCE="$GITHUB_WORKSPACE/$CONFIG_BUILD"
-        TARGET="$GITHUB_WORKSPACE/openwrt/.config"
-
-        echo "输入配置：$SOURCE"
-        echo "目标配置：$TARGET"
-
-        if [ ! -f "$SOURCE" ]; then
-          echo "错误：找不到 $SOURCE"
-          exit 1
-        fi
-
-        cp "$SOURCE" "$TARGET"
-
-        chmod +x "$GITHUB_WORKSPACE/$DIY_P2_SH"
-
-        cd "$GITHUB_WORKSPACE/openwrt"
-        "$GITHUB_WORKSPACE/$DIY_P2_SH"
-        make defconfig
-
-    - name: 检查最终配置
-      if: success()
-      working-directory: ./openwrt
-      run: |
-        echo "=== Target ==="
-        grep '^CONFIG_TARGET_' .config | head -20 || true
-
-        echo "=== Device ==="
-        grep '^CONFIG_TARGET_.*_DEVICE_.*=y' .config || true
-
-        echo "=== Config Size ==="
-        wc -l .config
-
-    - name: 下载安装包
-      working-directory: ./openwrt
-      run: |
-        make download -j"$(nproc)"
-        find dl -size -1024c -exec ls -l {} \;
-        find dl -size -1024c -exec rm -f {} \;
-
-    - name: 编译固件
-      id: compile
-      working-directory: ./openwrt
-      run: |
-        echo "使用 $(nproc) 线程编译"
-        make -j"$(nproc)" || make -j1 || make -j1 V=s
-
-    - name: 获取固件设备名字
-      if: steps.compile.outcome == 'success'
-      working-directory: ./openwrt
-      run: |
-        grep '^CONFIG_TARGET_.*_DEVICE_.*=y' .config \
-          | sed -r 's/^CONFIG_TARGET_.*_DEVICE_(.*)=y/\1/' \
-          | paste -sd '_' - > DEVICE_NAME
-
-        if [ -s DEVICE_NAME ]; then
-          echo "DEVICE_NAME=$(cat DEVICE_NAME)" >> "$GITHUB_ENV"
-        else
-          echo "DEVICE_NAME=unknown" >> "$GITHUB_ENV"
-        fi
-
-    - name: 上传bin目录
-      if: steps.compile.outcome == 'success' && env.UPLOAD_BIN == 'true'
-      uses: actions/upload-artifact@main
-      with:
-        name: bin_${{ env.OPENWRT_NAME }}_${{ env.DEVICE_NAME }}_${{ env.date1 }}
-        path: openwrt/bin
-
-    - name: 整理全部固件文件
-      id: organize
-      if: steps.compile.outcome == 'success'
-      run: |
-        set -e
-
-        rm -rf firmware
-        mkdir -p firmware
-
-        cp -a openwrt/bin/targets/. firmware/
-
-        cp openwrt/.config \
-          "firmware/${{ env.date1 }}_${{ env.OPENWRT_NAME }}_${{ env.DEVICE_NAME }}.config"
-
-        echo "FIRMWARE=$GITHUB_WORKSPACE/firmware" >> "$GITHUB_ENV"
-
-        echo "=== 文件数量 ==="
-        find firmware -type f | wc -l
-
-        echo "=== 文件大小 ==="
-        du -sh firmware
-
-    - name: 上传firmware
-      if: steps.organize.outcome == 'success' && env.UPLOAD_FIRMWARE == 'true'
-      uses: actions/upload-artifact@main
-      with:
-        name: firmware_${{ env.OPENWRT_NAME }}_${{ env.DEVICE_NAME }}_${{ env.date1 }}
-        path: ${{ env.FIRMWARE }}
-
-    - name: 生成Release描述
-      if: steps.organize.outcome == 'success' && env.UPLOAD_RELEASE == 'true'
-      run: |
-        cat > release.txt <<EOF
-        # ${{ env.OPENWRT_NAME }}
-
-        编译时间：${{ env.date3 }}
-        编译设备：${{ env.DEVICE_NAME }}
-        源码分支：${{ env.REPO_BRANCH }}
-
-        📦 本次Release包含：
-        - bin/targets目录全部文件
-        - 最终编译配置文件
-        EOF
-
-    - name: 创建Release
-      if: steps.organize.outcome == 'success' && env.UPLOAD_RELEASE == 'true'
-      uses: softprops/action-gh-release@master
-      with:
-        tag_name: ${{ env.OPENWRT_NAME }}-${{ env.date1 }}
-        name: ${{ env.OPENWRT_NAME }}-${{ env.date1 }}
-        body_path: release.txt
-        files: |
-          ${{ env.FIRMWARE }}/**/*
-
-    - name: 配置Git
-      if: steps.compile.outcome == 'success'
-      run: |
-        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-        git config user.name "github-actions[bot]"
-
-    - name: 保存最终config
-      if: steps.compile.outcome == 'success'
-      run: |
-        set -e
-
-        SOURCE="$GITHUB_WORKSPACE/openwrt/.config"
-        TARGET="$GITHUB_WORKSPACE/$CONFIG_FILE"
-
-        echo "最终配置：$SOURCE"
-        echo "保存位置：$TARGET"
-
-        if [ ! -f "$SOURCE" ]; then
-          echo "错误：最终 .config 不存在"
-          exit 1
-        fi
-
-        mkdir -p "$(dirname "$TARGET")"
-        cp "$SOURCE" "$TARGET"
-
-        echo "ipq807x.config 不会被修改。"
-
-        git add "$CONFIG_FILE"
-
-        if git diff --cached --quiet; then
-          echo "最终 .config 没有变化，不提交。"
-        else
-          git commit -m "update $OPENWRT_NAME config $(date '+%Y-%m-%d %H:%M:%S')"
+      - name: 提交最终配置
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add nss/immortalwrt/*.config.final
+          git diff --cached --quiet && exit 0
+          git commit -m "更新最终配置 ${GITHUB_RUN_NUMBER}"
           git push origin HEAD:main
-        fi
 
-    - name: 查看磁盘使用情况
-      if: always()
-      run: |
-        df -hT
+  cleanup:
+    name: 清理旧工作流
+    needs: [build, save-config]
+    if: always()
+    runs-on: ubuntu-latest
 
-    - name: 删除工作流
-      if: (!cancelled())
-      uses: Mattraks/delete-workflow-runs@main
-      with:
-        delete_workflow_pattern: ${{ github.workflow }}
-        retain_days: 7
-        keep_minimum_runs: 0
+    steps:
+      - name: 清理
+        uses: Mattraks/delete-workflow-runs@main
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          retain_days: 7
+          keep_minimum_runs: 3
