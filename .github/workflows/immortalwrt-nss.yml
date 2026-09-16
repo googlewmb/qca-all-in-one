@@ -142,14 +142,12 @@ jobs:
         echo "由衷感谢所有为openwrt无私奉献的大佬们" >> release.txt
         echo "📥 固件下载" >> release.txt
 
-    - name: 发布至release
-      if: steps.release.outcome == 'success'
+      if: steps.tag.outputs.status == 'success' && !cancelled()
       uses: softprops/action-gh-release@master
       with:
-        files: ${{ env.FIRMWARE }}/*
-        name: ${{ env.date3 }}
-        tag_name: ${{ env.date2 }}
+        tag_name: ${{ steps.tag.outputs.release_tag }}
         body_path: release.txt
+        files: ${{ env.FIRMWARE }}/*
 
     - name: config文件上传自动更新1
       run: |
@@ -164,7 +162,6 @@ jobs:
     - name: config文件上传自动更新3
       run: |
         cp ./openwrt/.config $GITHUB_WORKSPACE/main/${{ env.CONFIG_FILE }}
-        cp ./openwrt/bin/targets/*/*/config.buildinfo $GITHUB_WORKSPACE/main/${{ env.CONFIG_BUILD }}
         cd $GITHUB_WORKSPACE/main
         git add .
         if git diff --cached --quiet; then
@@ -173,6 +170,7 @@ jobs:
           git commit -am "update $(date '+%Y-%m-%d %H:%M:%S')"
           git push --quiet "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ env.REPO }}.git" HEAD:main
         fi
+        
 
     - name: 查看磁盘使用情况
       if: (!cancelled())
