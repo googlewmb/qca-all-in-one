@@ -48,18 +48,25 @@ jobs:
 
       - name: 释放磁盘
         run: |
-          sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc /opt/hostedtoolcache/CodeQL
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /opt/hostedtoolcache/CodeQL
           sudo docker system prune -af || true
 
       - name: 安装依赖
         run: |
           sudo apt-get update
+          sudo apt-get full-upgrade -y
           sudo apt-get install -y \
-            build-essential clang flex bison gawk \
-            gcc-multilib g++-multilib gettext git \
-            libncurses-dev libssl-dev python3 \
-            python3-distutils python3-setuptools \
-            rsync unzip zlib1g-dev file wget curl ccache
+            ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential \
+            bzip2 ccache clang cmake cpio curl device-tree-compiler ecj fastjar flex gawk gettext gcc-multilib \
+            g++-multilib git gnutls-dev gperf haveged help2man intltool lib32gcc-s1 libc6-dev-i386 libelf-dev \
+            libglib2.0-dev libgmp3-dev libltdl-dev libmpc-dev libmpfr-dev libncurses-dev libpython3-dev \
+            libreadline-dev libssl-dev libtool libyaml-dev libz-dev lld llvm lrzsz mkisofs msmtp nano \
+            ninja-build p7zip p7zip-full patch pkgconf python3 python3-pip python3-ply python3-docutils \
+            python3-pyelftools qemu-utils re2c rsync scons squashfs-tools subversion swig texinfo uglifyjs \
+            upx-ucl unzip vim wget xmlto xxd zlib1g-dev zstd
 
       - name: 设置时间
         run: |
@@ -101,6 +108,7 @@ jobs:
           mkdir -p "final-config/${{ matrix.name }}"
           cp openwrt/.config \
             "final-config/${{ matrix.name }}/.config"
+
           echo "${{ matrix.config_final }}" \
             > "final-config/${{ matrix.name }}/TARGET"
 
@@ -114,7 +122,8 @@ jobs:
         run: |
           d=$(grep -E '^CONFIG_TARGET_.*_DEVICE_' openwrt/.config \
             | head -n1 \
-            | sed -E 's/CONFIG_TARGET_([^=]+)=y/' || true)
+            | sed -E 's/CONFIG_TARGET_([^=]+)=y/\1/' || true)
+
           echo "DEVICE_NAME=${d:-${{ matrix.name }}}" >> "$GITHUB_ENV"
 
       - name: 上传完整编译目录
@@ -190,6 +199,7 @@ jobs:
           for d in final-configs/最终配置-*; do
             [ -f "$d/.config" ] || continue
             [ -f "$d/TARGET" ] || continue
+
             t=$(cat "$d/TARGET")
             mkdir -p "$(dirname "$t")"
             cp "$d/.config" "$t"
@@ -199,8 +209,11 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
           git add nss/immortalwrt/*.config.final
+
           git diff --cached --quiet && exit 0
+
           git commit -m "更新最终配置 ${GITHUB_RUN_NUMBER}"
           git push origin HEAD:main
 
@@ -211,7 +224,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 清理
+      - name: 清理工作流
         uses: Mattraks/delete-workflow-runs@main
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
