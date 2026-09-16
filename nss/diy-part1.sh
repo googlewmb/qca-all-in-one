@@ -1,105 +1,143 @@
 #!/bin/bash
 #
-# DIY1
-# H68K + ImmortalWrt/OpenWrt
+# nss
+# 第三方插件源码
 #
 
-# ============================================================
-# 添加 kenzok8 软件源
-# ============================================================
+echo "DIY1 - 下载第三方插件"
 
-sed -i '1i src-git kenzo https://github.com/kenzok8/openwrt-packages' feeds.conf.default
-sed -i '2i src-git small https://github.com/kenzok8/small' feeds.conf.default
-sed -i '3i src-git smpackage https://github.com/kenzok8/small-package' feeds.conf.default
+mkdir -p package/myapp
+cd package/myapp
 
+# OpenClash
+git clone -b master --depth 1 \
+https://github.com/vernesong/OpenClash.git \
+openclash
 
-# ============================================================
-# 删除官方冲突包
-# ============================================================
+# HomeProxy
+git clone -b master --depth 1 \
+https://github.com/immortalwrt/homeproxy.git \
+homeproxy
 
-rm -rf feeds/luci/applications/luci-app-passwall
-rm -rf feeds/luci/applications/luci-app-passwall2
-rm -rf feeds/luci/applications/luci-app-openclash
-rm -rf feeds/luci/applications/luci-app-homeproxy
-rm -rf feeds/luci/applications/luci-app-lucky
-rm -rf feeds/luci/applications/luci-app-smartdns
-rm -rf feeds/luci/applications/luci-app-mosdns
+# SmartDNS
+git clone -b master --depth 1 \
+https://github.com/pymumu/luci-app-smartdns.git \
+luci-app-smartdns
 
-rm -rf feeds/packages/net/xray-core
-rm -rf feeds/packages/net/v2ray-geodata
-rm -rf feeds/packages/net/sing-box
-rm -rf feeds/packages/net/chinadns-ng
-rm -rf feeds/packages/net/dns2socks
-rm -rf feeds/packages/net/hysteria
-rm -rf feeds/packages/net/ipt2socks
-rm -rf feeds/packages/net/microsocks
-rm -rf feeds/packages/net/naiveproxy
-rm -rf feeds/packages/net/shadowsocks-rust
-rm -rf feeds/packages/net/shadowsocksr-libev
-rm -rf feeds/packages/net/simple-obfs
-rm -rf feeds/packages/net/tcping
-rm -rf feeds/packages/net/v2ray-plugin
-rm -rf feeds/packages/net/xray-plugin
-rm -rf feeds/packages/net/geoview
-rm -rf feeds/packages/net/shadow-tls
-rm -rf feeds/packages/net/alist
-rm -rf feeds/packages/net/adguardhome
-rm -rf feeds/packages/net/mosdns
-rm -rf feeds/packages/net/smartdns
+git clone -b master --depth 1 \
+https://github.com/pymumu/smartdns.git \
+smartdns
 
-rm -rf feeds/packages/utils/v2dat
+# MosDNS
+git clone -b v5 --depth 1 \
+https://github.com/sbwml/luci-app-mosdns.git \
+mosdns
 
-
-# ============================================================
-# Golang
-# ============================================================
-
-rm -rf feeds/packages/lang/golang
-
-git clone --depth 1 -b 1.26 \
-https://github.com/kenzok8/golang \
-feeds/packages/lang/golang
-
-
-# ============================================================
-# PassWall 依赖
-# ============================================================
-
-rm -rf package/passwall-packages
-
+# V2Ray GeoData
 git clone --depth 1 \
-https://github.com/Openwrt-Passwall/openwrt-passwall-packages \
-package/passwall-packages
+https://github.com/sbwml/v2ray-geodata.git \
+v2ray-geodata
 
+# H68K / jjm2473
+git clone -b master --depth 1 \
+https://github.com/jjm2473/luci-app-oled.git \
+luci-app-oled
 
-# ============================================================
-# 更新 feeds
-# ============================================================
+git clone -b main --depth 1 \
+https://github.com/jjm2473/lcdsimple.git \
+lcdsimple
 
-./scripts/feeds update -a
-./scripts/feeds install -a
+git clone -b dev --depth 1 \
+https://github.com/jjm2473/luci-app-diskman.git \
+luci-app-diskman
 
+git clone -b dev7 --depth 1 \
+https://github.com/jjm2473/OpenAppFilter.git \
+OpenAppFilter
 
-# ============================================================
-# 自动添加 LuCI 中文语言包
-# ============================================================
+# Lucky
+#git clone -b main --depth 1 \
+#https://github.com/gdy666/luci-app-lucky.git \
+#lucky
 
-for pkg in $(grep '^CONFIG_PACKAGE_luci-app-.*=y' .config | sed 's/^CONFIG_PACKAGE_//;s/=y//'); do
-    trans="luci-i18n-${pkg#luci-app-}"
+# TimeControl
+#git clone -b main --depth 1 \
+#https://github.com/sirpdboy/luci-app-timecontrol.git \
+#timecontrol
 
-    if grep -q "^CONFIG_PACKAGE_${trans}-zh-cn=y" .config 2>/dev/null; then
-        continue
-    fi
+# Nikki
+#git clone -b main --depth 1 \
+#https://github.com/nikkinikki-org/OpenWrt-nikki.git \
+#nikki
 
-    if grep -rq "Package.*${trans}-zh-cn" feeds/luci feeds/*/* 2>/dev/null; then
-        echo "自动添加中文语言包: ${trans}-zh-cn"
-        echo "CONFIG_PACKAGE_${trans}-zh-cn=y" >> .config
-    fi
-done
+# Momo
+#git clone -b main --depth 1 \
+#https://github.com/nikkinikki-org/OpenWrt-momo.git \
+#momo
 
+# Daed
+#git clone -b master --depth 1 \
+#https://github.com/QiuSimons/luci-app-daed.git \
+#daed
 
-# ============================================================
-# 修正配置
-# ============================================================
+# Aurora
+#git clone -b master --depth 1 \
+#https://github.com/eamonxg/luci-theme-aurora.git \
+#aurora
 
-make defconfig
+# HelloWorld
+#git clone -b master --depth 1 \
+#https://github.com/fw876/helloworld.git \
+#helloworld
+
+# PassWall Packages
+#git clone -b main --depth 1 \
+#https://github.com/Openwrt-Passwall/openwrt-passwall-packages.git \
+#passwall-packages
+
+# PassWall
+#git clone -b main --depth 1 \
+#https://github.com/Openwrt-Passwall/openwrt-passwall.git \
+#passwall
+
+# PassWall2
+#git clone -b main --depth 1 \
+#https://github.com/Openwrt-Passwall/openwrt-passwall2.git \
+#passwall2
+
+cd ../..
+
+echo "添加插件集合源"
+
+# iStore Packages
+#echo 'src-git istore https://github.com/linkease/istore-packages.git;main' >> feeds.conf.default
+
+# NAS Packages
+echo 'src-git nas https://github.com/linkease/nas-packages.git;master' >> feeds.conf.default
+echo 'src-git nas_luci https://github.com/linkease/nas-packages-luci.git;main' >> feeds.conf.default
+
+# jjm2473 Apps
+echo 'src-git jjm2473_apps https://github.com/jjm2473/openwrt-apps.git;main' >> feeds.conf.default
+
+# Kenzok8
+echo 'src-git kenzo https://github.com/kenzok8/openwrt-packages.git' >> feeds.conf.default
+echo 'src-git small https://github.com/kenzok8/small.git' >> feeds.conf.default
+#echo 'src-git small_package https://github.com/kenzok8/small-package.git' >> feeds.conf.default
+
+# Kiddin9
+#echo 'src-git kiddin9 https://github.com/kiddin9/op-packages.git' >> feeds.conf.default
+
+# VIKINGYFY
+#echo 'src-git vikingyfy https://github.com/VIKINGYFY/packages.git' >> feeds.conf.default
+
+# Modem
+#echo 'src-git modem https://github.com/FUjr/modem_feeds.git' >> feeds.conf.default
+
+echo "package/myapp:"
+find package/myapp \
+-maxdepth 1 \
+-mindepth 1 \
+-type d \
+-printf '%f\n' | sort
+
+echo "DIY1 OK"
