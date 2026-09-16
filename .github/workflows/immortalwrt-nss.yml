@@ -28,11 +28,11 @@ jobs:
             config: nss/immortalwrt/ipq807x.config
             config_final: nss/immortalwrt/ipq807x.config.final
 
-          # - name: H68K
-          #   repo_url: https://github.com/LiBwrt/LibWrt
-          #   repo_branch: 25.12-nss
-          #   config: nss/immortalwrt/h68k.config
-          #   config_final: nss/immortalwrt/h68k.config.final
+          - name: ipq60x
+            repo_url: https://github.com/LiBwrt/LibWrt
+            repo_branch: 25.12-nss
+            config: nss/immortalwrt/ipq60x.config
+            config_final: nss/immortalwrt/ipq60x.config.final
 
           # - name: X86
           #   repo_url: https://github.com/immortalwrt/immortalwrt
