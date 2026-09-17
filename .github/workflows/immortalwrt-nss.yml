@@ -10,8 +10,8 @@ on:
 env:
   OPENWRT_NAME: Openwrt
   REPO: googlewmb/qca-all-in-one
-  REPO_URL: https://github.com/openwrt/openwrt
-  REPO_BRANCH: main
+  REPO_URL: https://github.com/LiBwrt/LibWrt
+  REPO_BRANCH: 25.12-nss
   CONFIG_FILE: nss/immortalwrt/.config
   CONFIG_BUILD: nss/immortalwrt/ipq80x.config
   DIY_P1_SH: nss/diy-part1.sh
