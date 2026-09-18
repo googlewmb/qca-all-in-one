@@ -42,7 +42,7 @@ if [ -d feeds/packages/lang/golang ]; then
 fi
 
 git clone \
-    -b 27.x \
+    -b 26.x \
     --depth 1 \
     https://github.com/sbwml/packages_lang_golang \
     feeds/packages/lang/golang
