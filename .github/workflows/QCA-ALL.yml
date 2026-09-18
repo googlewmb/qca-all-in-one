@@ -70,7 +70,7 @@ jobs:
       run: |
         chmod +x ${{ env.DIY_P1_SH }}
         cd openwrt
-        $GITHUB_WORKSPACE/${{ env.DIY_P1_SH }}
+        \( GITHUB_WORKSPACE/ \){{ env.DIY_P1_SH }}
 
     - name: 更新feeds
       working-directory: ./openwrt
@@ -83,7 +83,7 @@ jobs:
         [ -e ${{ env.CONFIG_BUILD}} ] && mv ${{ env.CONFIG_BUILD}} openwrt/.config
         chmod +x ${{ env.DIY_P2_SH }}
         cd openwrt
-        $GITHUB_WORKSPACE/${{ env.DIY_P2_SH }}
+        \( GITHUB_WORKSPACE/ \){{ env.DIY_P2_SH }}
         make defconfig
 
     - name: 下载安装包
@@ -103,14 +103,14 @@ jobs:
     - name: 获取固件设备名字
       working-directory: ./openwrt
       run: |
-        grep '^CONFIG_TARGET_.*_DEVICE_.*=y' .config | sed -r 's/^CONFIG_TARGET_(.*)_DEVICE_(.*)=y/\1_\2/' > DEVICE_NAME
+        grep '^CONFIG_TARGET_.*_DEVICE_.*=y' .config | sed -r 's/^CONFIG_TARGET_(.*)_DEVICE_(.*)=y/\1_\2/' | head -n1 > DEVICE_NAME
         [ -s DEVICE_NAME ] && echo "DEVICE_NAME=$(cat DEVICE_NAME)" >> $GITHUB_ENV
 
     - name: 上传bin目录文件
       if: steps.compile.outcome == 'success' && env.UPLOAD_BIN == 'true'
       uses: actions/upload-artifact@main
       with:
-        name: bin_${{ env.OPENWRT_NAME }}_${{ env.DEVICE_NAME }}_${{ env.date1 }}
+        name: bin_\( {{ env.OPENWRT_NAME }}_ \){{ env.DEVICE_NAME }}_${{ env.date1 }}
         path: openwrt/bin
 
     - name: 整理文件到firmware目录
@@ -118,22 +118,22 @@ jobs:
       if: steps.compile.outcome == 'success'
       run: |
         mkdir firmware
-        cp -v ./openwrt/.config ./firmware/${{ env.date1 }}_${{ env.OPENWRT_NAME }}_${{ env.DEVICE_NAME }}.config
+        cp -v ./openwrt/.config ./firmware/\( {{ env.date1 }}_ \){{ env.OPENWRT_NAME }}_${{ env.DEVICE_NAME }}.config
         find openwrt/bin/targets/*/*/ -maxdepth 1 \
         -name "config.buildinfo" \
         -or -name "*squashfs-combined*" \
         | xargs cp -t ./firmware/
         cd firmware
         sudo apt-get install -y rename
-        rename -v 's/^/${{ env.date1 }}_${{ env.OPENWRT_NAME }}_${{ env.DEVICE_NAME }}_/' config.buildinfo
-        rename -v 's/^/${{ env.date1 }}_${{ env.OPENWRT_NAME }}_/' *squashfs-combined*
+        rename -v 's/^/\( {{ env.date1 }}_ \){{ env.OPENWRT_NAME }}_${{ env.DEVICE_NAME }}_/' config.buildinfo
+        rename -v 's/^/\( {{ env.date1 }}_ \){{ env.OPENWRT_NAME }}_/' *squashfs-combined*
         echo "FIRMWARE=$PWD" >> $GITHUB_ENV
 
     - name: 上传firmware目录文件
       if: steps.organize.outcome == 'success' && env.UPLOAD_FIRMWARE == 'true'
       uses: actions/upload-artifact@main
       with:
-        name: firmware_${{ env.OPENWRT_NAME }}_${{ env.DEVICE_NAME }}_${{ env.date1 }}
+        name: firmware_\( {{ env.OPENWRT_NAME }}_ \){{ env.DEVICE_NAME }}_${{ env.date1 }}
         path: ${{ env.FIRMWARE }}
 
     - name: 生成release描述
@@ -165,15 +165,15 @@ jobs:
 
     - name: config文件上传自动更新3
       run: |
-        cp ./openwrt/.config $GITHUB_WORKSPACE/main/${{ env.CONFIG_FILE }}
-        cp ./openwrt/bin/targets/*/*/config.buildinfo $GITHUB_WORKSPACE/main/${{ env.CONFIG_BUILD }}
+        cp ./openwrt/.config \( GITHUB_WORKSPACE/main/ \){{ env.CONFIG_FILE }}
+        cp ./openwrt/bin/targets/*/*/config.buildinfo \( GITHUB_WORKSPACE/main/ \){{ env.CONFIG_BUILD }}
         cd $GITHUB_WORKSPACE/main
         git add .
         if git diff --cached --quiet; then
           echo "nothing to commit"
         else
           git commit -am "update $(date '+%Y-%m-%d %H:%M:%S')"
-          git push --quiet "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ env.REPO }}.git" HEAD:main
+          git push --quiet "https://x-access-token:\( {{ secrets.GITHUB_TOKEN }}@github.com/ \){{ env.REPO }}.git" HEAD:main
         fi
 
     - name: 查看磁盘使用情况
