@@ -122,16 +122,16 @@ echo 'src-git nas_luci https://github.com/linkease/nas-packages-luci.git;main' >
 # Kenzok8
 echo 'src-git kenzo https://github.com/kenzok8/openwrt-packages.git' >> feeds.conf.default
 echo 'src-git small https://github.com/kenzok8/small.git' >> feeds.conf.default
-#echo 'src-git small_package https://github.com/kenzok8/small-package.git' >> feeds.conf.default
+# echo 'src-git small_package https://github.com/kenzok8/small-package.git' >> feeds.conf.default
 
 # Kiddin9
 #echo 'src-git kiddin9 https://github.com/kiddin9/op-packages.git' >> feeds.conf.default
 
 # VIKINGYFY
-echo 'src-git vikingyfy https://github.com/VIKINGYFY/packages.git' >> feeds.conf.default
+# echo 'src-git vikingyfy https://github.com/VIKINGYFY/packages.git' >> feeds.conf.default
 
 # Modem
-#echo 'src-git modem https://github.com/FUjr/modem_feeds.git' >> feeds.conf.default
+# echo 'src-git modem https://github.com/FUjr/modem_feeds.git' >> feeds.conf.default
 
 echo "package/myapp:"
 find package/myapp \
