@@ -117,7 +117,7 @@ echo 'src-git nas https://github.com/linkease/nas-packages.git;master' >> feeds.
 echo 'src-git nas_luci https://github.com/linkease/nas-packages-luci.git;main' >> feeds.conf.default
 
 # jjm2473 Apps
-echo 'src-git jjm2473_apps https://github.com/jjm2473/openwrt-apps.git;main' >> feeds.conf.default
+# echo 'src-git jjm2473_apps https://github.com/jjm2473/openwrt-apps.git;main' >> feeds.conf.default
 
 # Kenzok8
 echo 'src-git kenzo https://github.com/kenzok8/openwrt-packages.git' >> feeds.conf.default
@@ -128,7 +128,7 @@ echo 'src-git small https://github.com/kenzok8/small.git' >> feeds.conf.default
 #echo 'src-git kiddin9 https://github.com/kiddin9/op-packages.git' >> feeds.conf.default
 
 # VIKINGYFY
-#echo 'src-git vikingyfy https://github.com/VIKINGYFY/packages.git' >> feeds.conf.default
+echo 'src-git vikingyfy https://github.com/VIKINGYFY/packages.git' >> feeds.conf.default
 
 # Modem
 #echo 'src-git modem https://github.com/FUjr/modem_feeds.git' >> feeds.conf.default
