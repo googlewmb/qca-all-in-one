@@ -168,7 +168,6 @@ jobs:
     - name: config文件上传自动更新3
       run: |
         cp ./openwrt/.config $GITHUB_WORKSPACE/main/${{ env.CONFIG_FILE }}
-        cp ./openwrt/bin/targets/*/*/config.buildinfo $GITHUB_WORKSPACE/main/${{ env.CONFIG_BUILD }}
         cd $GITHUB_WORKSPACE/main
         git add .
         if git diff --cached --quiet; then
