@@ -419,7 +419,12 @@ CONFIG_PACKAGE_luci-theme-bootstrap=y
 # LuCI 协议 / 库 / 前端优化
 
 
+CONFIG_PACKAGE_natmapt=y
 CONFIG_PACKAGE_stuntman-client=y
+CONFIG_PACKAGE_luci-app-natmapt=y
+CONFIG_PACKAGE_coreutils-timeout=y
+
+
 CONFIG_PACKAGE_fullconenat-sonic=y
 
 CONFIG_PACKAGE_luci-proto-ipv6=y
