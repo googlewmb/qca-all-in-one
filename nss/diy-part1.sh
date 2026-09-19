@@ -55,6 +55,21 @@ git clone -b dev7 --depth 1 \
 https://github.com/jjm2473/OpenAppFilter.git \
 OpenAppFilter
 
+# NATMap 后端
+git clone -b master --depth 1 \
+https://github.com/muink/openwrt-natmapt.git \
+natmapt
+
+# STUNTMAN 客户端
+git clone -b master --depth 1 \
+https://github.com/muink/openwrt-stuntman.git \
+stuntman
+
+# NATMap LuCI
+git clone -b master --depth 1 \
+https://github.com/muink/luci-app-natmapt.git \
+luci-app-natmapt
+
 # Lucky
 #git clone -b main --depth 1 \
 #https://github.com/gdy666/luci-app-lucky.git \
