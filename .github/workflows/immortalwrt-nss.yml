@@ -121,14 +121,33 @@ jobs:
       run: |
         mkdir firmware
         cp -v ./openwrt/.config ./firmware/${{ env.date1 }}_${{ env.OPENWRT_NAME }}_${{ env.DEVICE_NAME }}.config
-        find openwrt/bin/targets/*/*/ -maxdepth 1 \
-        -name "config.buildinfo" \
-        -or -name "*squashfs-combined*" \
-        | xargs cp -t ./firmware/
+
+        find openwrt/bin/targets/*/*/ -maxdepth 1 -type f \
+        \( -name "config.buildinfo" -o \
+           -name "*.bin" -o \
+           -name "*.img" -o \
+           -name "*.itb" -o \
+           -name "*.ubi" -o \
+           -name "*.trx" -o \
+           -name "*.tar" \
+        \) \
+        -exec cp -v {} ./firmware/ \;
+
         cd firmware
+
         sudo apt-get install -y rename
-        rename -v 's/^/${{ env.date1 }}_${{ env.OPENWRT_NAME }}_${{ env.DEVICE_NAME }}_/' config.buildinfo
-        rename -v 's/^/${{ env.date1 }}_${{ env.OPENWRT_NAME }}_/' *squashfs-combined*
+
+        if [ -f config.buildinfo ]; then
+          mv config.buildinfo \
+          "${{ env.date1 }}_${{ env.OPENWRT_NAME }}_${{ env.DEVICE_NAME }}_config.buildinfo"
+        fi
+
+        for file in *.bin *.img *.itb *.ubi *.trx *.tar; do
+          [ -f "$file" ] || continue
+          mv "$file" \
+          "${{ env.date1 }}_${{ env.OPENWRT_NAME }}_${{ env.DEVICE_NAME }}_$file"
+        done
+
         echo "FIRMWARE=$PWD" >> $GITHUB_ENV
 
     - name: 上传firmware目录文件
