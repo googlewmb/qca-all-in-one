@@ -12,7 +12,12 @@ CONFIG_TARGET_qualcommax=y
 CONFIG_TARGET_qualcommax_ipq807x=y
 CONFIG_TARGET_MULTI_PROFILE=y
 CONFIG_TARGET_PER_DEVICE_ROOTFS=y
-CONFIG_LINUX_6_18=y
+
+CONFIG_PACKAGE_stuntman-client=y
+CONFIG_PACKAGE_natmapt=y
+CONFIG_PACKAGE_luci-app-natmapt=y
+CONFIG_PACKAGE_coreutils-timeout=y
+
 
 # ==================== 设备型号 ====================
 
