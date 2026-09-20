@@ -1,14 +1,21 @@
-# iqp80x 专用 ImmortalWRT 精简完整功能配置
-# 仅支持本机 + 完整 NSS 加速
+#
+# ImmortalWrt 配置文件
+# 平台：Qualcomm IPQ807x
+# 内核：Linux 6.18
+# 多设备配置
+#
 
+# ==================== 目标平台 ====================
 
-# 目标平台 / 架构 / 构建系统
-
-CONFIG_MODULES=y
-CONFIG_HAVE_DOT_CONFIG=y
-CONFIG_HOST_OS_LINUX=y
+CONFIG_DEFAULT_TARGET_qualcommax_ipq807x=y
 CONFIG_TARGET_qualcommax=y
 CONFIG_TARGET_qualcommax_ipq807x=y
+CONFIG_TARGET_MULTI_PROFILE=y
+CONFIG_TARGET_PER_DEVICE_ROOTFS=y
+CONFIG_LINUX_6_18=y
+
+# ==================== 设备型号 ====================
+
 CONFIG_TARGET_DEVICE_qualcommax_ipq807x_DEVICE_aliyun_ap8220=y
 CONFIG_TARGET_DEVICE_qualcommax_ipq807x_DEVICE_redmi_ax6-stock=y
 CONFIG_TARGET_DEVICE_qualcommax_ipq807x_DEVICE_redmi_ax6=y
@@ -16,35 +23,57 @@ CONFIG_TARGET_DEVICE_qualcommax_ipq807x_DEVICE_xiaomi_ax3600-stock=y
 CONFIG_TARGET_DEVICE_qualcommax_ipq807x_DEVICE_xiaomi_ax3600=y
 CONFIG_TARGET_DEVICE_qualcommax_ipq807x_DEVICE_xiaomi_ax9000-stock=y
 CONFIG_TARGET_DEVICE_qualcommax_ipq807x_DEVICE_xiaomi_ax9000=y
-CONFIG_HAS_SUBTARGETS=y
-CONFIG_HAS_DEVICES=y
+
+# ==================== 固件镜像 ====================
 
 CONFIG_TARGET_ROOTFS_SQUASHFS=y
 CONFIG_TARGET_UBIFS_FREE_SPACE_FIXUP=y
+
+# ==================== 全局配置 ====================
+
 CONFIG_JSON_OVERVIEW_IMAGE_INFO=y
-CONFIG_ARCH_64BIT=y
-CONFIG_aarch64=y
-CONFIG_HAS_FPU=y
-CONFIG_GPIO_SUPPORT=y
-CONFIG_PCI_SUPPORT=y
-CONFIG_PCIE_SUPPORT=y
-CONFIG_PINCTRL_SUPPORT=y
-CONFIG_USB_SUPPORT=y
-CONFIG_USES_PM=y
-CONFIG_USES_DEVICETREE=y
-CONFIG_USES_INITRAMFS=y
-CONFIG_USES_SQUASHFS=y
-CONFIG_NAND_SUPPORT=y
-CONFIG_REGULATOR_SUPPORT=y
-
-# 软件包 / 安全 / 编译工具链
-
 CONFIG_SIGNED_PACKAGES=y
 CONFIG_SIGNATURE_CHECK=y
 CONFIG_DOWNLOAD_CHECK_CERTIFICATE=y
 CONFIG_USE_APK=y
 CONFIG_SIGN_EACH_PACKAGE=y
+CONFIG_SIGN_FIRMWARE=y
 CONFIG_SHADOW_PASSWORDS=y
+CONFIG_IPV6=y
+
+# ==================== 开发与编译 ====================
+
+CONFIG_DEVEL=y
+CONFIG_AUTOREBUILD=y
+CONFIG_CCACHE=y
+CONFIG_MOLD=y
+CONFIG_GDB=y
+
+CONFIG_BPF_TOOLCHAIN_BUILD_LLVM=y
+CONFIG_NEED_TOOLCHAIN=y
+CONFIG_HAS_BPF_TOOLCHAIN=y
+
+CONFIG_USE_MUSL=y
+CONFIG_MUSL_DISABLE_CRYPT_SIZE_HACK=y
+CONFIG_SSP_SUPPORT=y
+CONFIG_BINUTILS_VERSION_2_46=y
+CONFIG_GCC_USE_DEFAULT_VERSION=y
+
+# ==================== 系统启动 ====================
+
+CONFIG_TARGET_PREINIT_SUPPRESS_STDERR=y
+CONFIG_TARGET_INIT_SUPPRESS_STDERR=y
+
+# ==================== 软件源 ====================
+
+CONFIG_PER_FEED_REPO=y
+CONFIG_FEED_packages=y
+CONFIG_FEED_luci=y
+CONFIG_FEED_routing=y
+CONFIG_FEED_telephony=y
+
+# ==================== 编译安全优化 ====================
+
 CONFIG_USE_SSTRIP=y
 CONFIG_SSTRIP_DISCARD_TRAILING_ZEROES=y
 CONFIG_PKG_CHECK_FORMAT_SECURITY=y
@@ -56,12 +85,8 @@ CONFIG_PKG_FORTIFY_SOURCE_1=y
 CONFIG_PKG_RELRO_FULL=y
 CONFIG_PKG_DT_RELR=y
 CONFIG_USE_SECCOMP=y
-CONFIG_USE_MUSL=y
-CONFIG_SSP_SUPPORT=y
-CONFIG_BINUTILS_VERSION_2_46=y
-CONFIG_GCC_USE_DEFAULT_VERSION=y
 
-# 内核核心 / 性能 / 调试
+# ==================== 内核基础功能 ====================
 
 CONFIG_KERNEL_PRINTK=y
 CONFIG_KERNEL_SWAP=y
@@ -76,12 +101,8 @@ CONFIG_KERNEL_COREDUMP=y
 CONFIG_KERNEL_ELF_CORE=y
 CONFIG_KERNEL_PRINTK_TIME=y
 CONFIG_KERNEL_KEYS=y
-CONFIG_KERNEL_CC_OPTIMIZE_FOR_PERFORMANCE=y
-CONFIG_KERNEL_PREEMPT_NONE=y
-CONFIG_KERNEL_SKB_RECYCLER=y
-CONFIG_KERNEL_SKB_RECYCLER_MULTI_CPU=y
 
-# 内核 CGROUP / 命名空间 / 安全
+# ==================== CGroup ====================
 
 CONFIG_KERNEL_CGROUPS=y
 CONFIG_KERNEL_FREEZER=y
@@ -98,6 +119,9 @@ CONFIG_KERNEL_CFS_BANDWIDTH=y
 CONFIG_KERNEL_RT_GROUP_SCHED=y
 CONFIG_KERNEL_BLK_CGROUP=y
 CONFIG_KERNEL_BLK_DEV_THROTTLING=y
+
+# ==================== 命名空间 ====================
+
 CONFIG_KERNEL_NAMESPACES=y
 CONFIG_KERNEL_UTS_NS=y
 CONFIG_KERNEL_IPC_NS=y
@@ -105,10 +129,13 @@ CONFIG_KERNEL_USER_NS=y
 CONFIG_KERNEL_PID_NS=y
 CONFIG_KERNEL_NET_NS=y
 CONFIG_KERNEL_POSIX_MQUEUE=y
+
+# ==================== Seccomp 安全 ====================
+
 CONFIG_KERNEL_SECCOMP_FILTER=y
 CONFIG_KERNEL_SECCOMP=y
 
-# 内核网络 / IPv4 / IPv6 / MPTCP
+# ==================== IPv4 / IPv6 ====================
 
 CONFIG_KERNEL_IP_MROUTE=y
 CONFIG_KERNEL_IP_MROUTE_MULTIPLE_TABLES=y
@@ -121,41 +148,256 @@ CONFIG_KERNEL_IPV6_MROUTE=y
 CONFIG_KERNEL_IPV6_MROUTE_MULTIPLE_TABLES=y
 CONFIG_KERNEL_IPV6_PIMSM_V2=y
 CONFIG_KERNEL_IPV6_SEG6_LWTUNNEL=y
+
+# ==================== 网络内核 ====================
+
 CONFIG_KERNEL_NET_L3_MASTER_DEV=y
 CONFIG_KERNEL_MPTCP=y
 CONFIG_KERNEL_MPTCP_IPV6=y
 CONFIG_KERNEL_NF_CONNTRACK_TIMEOUT=y
-CONFIG_IPV6=y
 
-# NSS 完整加速（全部保留）
+# ==================== 文件系统 ACL / 安全 ====================
 
-CONFIG_PACKAGE_nss-firmware=y
+CONFIG_KERNEL_EROFS_FS_XATTR=y
+CONFIG_USE_FS_ACL_ATTR=y
+CONFIG_KERNEL_FS_POSIX_ACL=y
+CONFIG_KERNEL_BTRFS_FS_POSIX_ACL=y
+CONFIG_KERNEL_EROFS_FS_POSIX_ACL=y
+CONFIG_KERNEL_EXT4_FS_POSIX_ACL=y
+CONFIG_KERNEL_F2FS_FS_POSIX_ACL=y
+CONFIG_KERNEL_JFFS2_FS_POSIX_ACL=y
+CONFIG_KERNEL_TMPFS_POSIX_ACL=y
+CONFIG_KERNEL_CIFS_ACL=y
+CONFIG_KERNEL_HFS_FS_POSIX_ACL=y
+CONFIG_KERNEL_HFSPLUS_FS_POSIX_ACL=y
+CONFIG_KERNEL_NFS_ACL_SUPPORT=y
+CONFIG_KERNEL_REISER_FS_POSIX_ACL=y
+CONFIG_KERNEL_XFS_FS_POSIX_ACL=y
+CONFIG_KERNEL_JFS_FS_POSIX_ACL=y
+
+# ==================== 内核性能 ====================
+
+CONFIG_KERNEL_CC_OPTIMIZE_FOR_PERFORMANCE=y
+CONFIG_KERNEL_EROFS_FS_SECURITY=y
+CONFIG_KERNEL_EXT4_FS_SECURITY=y
+CONFIG_KERNEL_F2FS_FS_SECURITY=y
+CONFIG_KERNEL_UBIFS_FS_SECURITY=y
+CONFIG_KERNEL_JFFS2_FS_SECURITY=y
+CONFIG_KERNEL_PREEMPT_NONE=y
+CONFIG_KERNEL_SKB_RECYCLER=y
+CONFIG_KERNEL_SKB_RECYCLER_MULTI_CPU=y
+
+# ==================== 系统基础组件 ====================
+
+CONFIG_PACKAGE_apk-openssl=y
+CONFIG_PACKAGE_base-files=y
+CONFIG_PACKAGE_block-mount=y
+CONFIG_PACKAGE_busybox=y
+CONFIG_PACKAGE_ca-bundle=y
+
+# DNSMasq 完整功能
+CONFIG_PACKAGE_dnsmasq-full=y
+CONFIG_PACKAGE_dnsmasq_full_dhcp=y
+CONFIG_PACKAGE_dnsmasq_full_dhcpv6=y
+CONFIG_PACKAGE_dnsmasq_full_dnssec=y
+CONFIG_PACKAGE_dnsmasq_full_auth=y
+CONFIG_PACKAGE_dnsmasq_full_nftset=y
+CONFIG_PACKAGE_dnsmasq_full_conntrack=y
+CONFIG_PACKAGE_dnsmasq_full_noid=y
+CONFIG_PACKAGE_dnsmasq_full_tftp=y
+
+CONFIG_PACKAGE_dropbear=y
+CONFIG_PACKAGE_firewall4=y
+CONFIG_PACKAGE_fstools=y
+CONFIG_FSTOOLS_UBIFS_EXTROOT=y
+CONFIG_PACKAGE_fwtool=y
+CONFIG_PACKAGE_getrandom=y
+CONFIG_PACKAGE_jsonfilter=y
+CONFIG_PACKAGE_libatomic=y
+CONFIG_PACKAGE_libc=y
+CONFIG_PACKAGE_libgcc=y
+CONFIG_PACKAGE_libpthread=y
+CONFIG_PACKAGE_librt=y
+CONFIG_PACKAGE_libstdcpp=y
+CONFIG_PACKAGE_logd=y
+CONFIG_PACKAGE_mtd=y
+CONFIG_PACKAGE_netifd=y
+CONFIG_PACKAGE_openwrt-keyring=y
+CONFIG_PACKAGE_procd=y
+CONFIG_PACKAGE_procd-seccomp=y
+CONFIG_PACKAGE_procd-ujail=y
+CONFIG_PACKAGE_rpcd=y
+CONFIG_PACKAGE_rpcd-mod-file=y
+CONFIG_PACKAGE_rpcd-mod-iwinfo=y
+CONFIG_PACKAGE_rpcd-mod-ucode=y
+CONFIG_PACKAGE_ubox=y
+CONFIG_PACKAGE_ubus=y
+CONFIG_PACKAGE_ubusd=y
+CONFIG_PACKAGE_uci=y
+CONFIG_PACKAGE_urandom-seed=y
+CONFIG_PACKAGE_urngd=y
+CONFIG_PACKAGE_usign=y
+CONFIG_PACKAGE_wifi-scripts=y
+CONFIG_WIFI_SCRIPTS_UCODE=y
+
+# ==================== 系统管理 ====================
+
+CONFIG_PACKAGE_htop=y
+CONFIG_HTOP_LMSENSORS=y
+CONFIG_PACKAGE_autocore=y
+CONFIG_PACKAGE_automount=y
+CONFIG_PACKAGE_cpufreq=y
+
+# ==================== 固件 ====================
+
+CONFIG_PACKAGE_libiwinfo-data=y
+CONFIG_PACKAGE_ath11k-firmware-ipq8074-ddwrt=y
 CONFIG_PACKAGE_nss-eip-firmware=y
-CONFIG_PACKAGE_kmod-qca-nss-drv=y
-CONFIG_PACKAGE_kmod-qca-nss-ecm=y
-CONFIG_PACKAGE_kmod-qca-nss-dp=y
-CONFIG_PACKAGE_kmod-qca-nss-crypto=y
-CONFIG_PACKAGE_kmod-qca-ssdk=y
-CONFIG_PACKAGE_kmod-qca-nss-drv-bridge-mgr=y
-CONFIG_PACKAGE_kmod-qca-nss-drv-eogremgr=y
-CONFIG_PACKAGE_kmod-qca-nss-drv-gre=y
-CONFIG_PACKAGE_kmod-qca-nss-drv-igs=y
-CONFIG_PACKAGE_kmod-qca-nss-drv-l2tpv2=y
-CONFIG_PACKAGE_kmod-qca-nss-drv-lag-mgr=y
-CONFIG_PACKAGE_kmod-qca-nss-drv-map-t=y
-CONFIG_PACKAGE_kmod-qca-nss-drv-match=y
-CONFIG_PACKAGE_kmod-qca-nss-drv-mirror=y
-CONFIG_PACKAGE_kmod-qca-nss-drv-netlink=y
-CONFIG_PACKAGE_kmod-qca-nss-drv-pppoe=y
-CONFIG_PACKAGE_kmod-qca-nss-drv-pptp=y
-CONFIG_PACKAGE_kmod-qca-nss-drv-qdisc=y
-CONFIG_PACKAGE_kmod-qca-nss-drv-tun6rd=y
-CONFIG_PACKAGE_kmod-qca-nss-drv-tunipip6=y
-CONFIG_PACKAGE_kmod-qca-nss-drv-vlan-mgr=y
-CONFIG_PACKAGE_kmod-qca-nss-drv-vxlanmgr=y
-CONFIG_PACKAGE_kmod-qca-nss-drv-wifi-meshmgr=y
+CONFIG_PACKAGE_nss-firmware=y
+CONFIG_PACKAGE_r8152-firmware=y
+CONFIG_PACKAGE_wireless-regdb=y
 
-# NSS 驱动功能
+# ==================== 存储 / 文件系统内核模块 ====================
+
+CONFIG_PACKAGE_kmod-ata-ahci=y
+CONFIG_PACKAGE_kmod-ata-core=y
+CONFIG_PACKAGE_kmod-loop=y
+CONFIG_PACKAGE_kmod-nvme=y
+CONFIG_PACKAGE_kmod-scsi-core=y
+CONFIG_PACKAGE_kmod-fs-btrfs=y
+CONFIG_PACKAGE_kmod-fs-exfat=y
+CONFIG_PACKAGE_kmod-fs-ext4=y
+CONFIG_PACKAGE_kmod-fs-f2fs=y
+CONFIG_PACKAGE_kmod-fs-ksmbd=y
+CONFIG_PACKAGE_kmod-fs-netfs=y
+CONFIG_PACKAGE_kmod-fs-ntfs3=y
+CONFIG_PACKAGE_kmod-fs-smbfs-common=y
+CONFIG_PACKAGE_kmod-fs-vfat=y
+CONFIG_PACKAGE_kmod-fuse=y
+
+# ==================== 加密 ====================
+
+CONFIG_PACKAGE_kmod-crypto-acompress=y
+CONFIG_PACKAGE_kmod-crypto-aead=y
+CONFIG_PACKAGE_kmod-crypto-blake2b=y
+CONFIG_PACKAGE_kmod-crypto-ccm=y
+CONFIG_PACKAGE_kmod-crypto-chacha20poly1305=y
+CONFIG_PACKAGE_kmod-crypto-cmac=y
+CONFIG_PACKAGE_kmod-crypto-crc32=y
+CONFIG_PACKAGE_kmod-crypto-crc32c=y
+CONFIG_PACKAGE_kmod-crypto-ctr=y
+CONFIG_PACKAGE_kmod-crypto-des=y
+CONFIG_PACKAGE_kmod-crypto-ecb=y
+CONFIG_PACKAGE_kmod-crypto-gcm=y
+CONFIG_PACKAGE_kmod-crypto-geniv=y
+CONFIG_PACKAGE_kmod-crypto-gf128=y
+CONFIG_PACKAGE_kmod-crypto-ghash=y
+CONFIG_PACKAGE_kmod-crypto-hash=y
+CONFIG_PACKAGE_kmod-crypto-hmac=y
+CONFIG_PACKAGE_kmod-crypto-kpp=y
+CONFIG_PACKAGE_kmod-crypto-lib-chacha20=y
+CONFIG_PACKAGE_kmod-crypto-lib-chacha20poly1305=y
+CONFIG_PACKAGE_kmod-crypto-lib-curve25519=y
+CONFIG_PACKAGE_kmod-crypto-lib-poly1305=y
+CONFIG_PACKAGE_kmod-crypto-manager=y
+CONFIG_PACKAGE_kmod-crypto-md5=y
+CONFIG_PACKAGE_kmod-crypto-michael-mic=y
+CONFIG_PACKAGE_kmod-crypto-null=y
+CONFIG_PACKAGE_kmod-crypto-rng=y
+CONFIG_PACKAGE_kmod-crypto-seqiv=y
+CONFIG_PACKAGE_kmod-crypto-sha1=y
+CONFIG_PACKAGE_kmod-crypto-sha256=y
+CONFIG_PACKAGE_kmod-crypto-sha3=y
+CONFIG_PACKAGE_kmod-crypto-sha512=y
+CONFIG_PACKAGE_kmod-crypto-xxhash=y
+CONFIG_PACKAGE_kmod-qca-nss-crypto=y
+
+# ==================== 硬件 ====================
+
+CONFIG_PACKAGE_kmod-gpio-button-hotplug=y
+CONFIG_PACKAGE_kmod-hwmon-core=y
+CONFIG_PACKAGE_kmod-i2c-core=y
+CONFIG_PACKAGE_kmod-input-core=y
+CONFIG_PACKAGE_kmod-leds-gpio=y
+CONFIG_PACKAGE_kmod-thermal=y
+CONFIG_PACKAGE_kmod-sound-core=y
+CONFIG_PACKAGE_kmod-usb-audio=y
+CONFIG_PACKAGE_kmod-regmap-core=y
+CONFIG_PACKAGE_kmod-mtd-rw=y
+
+# ==================== 内核库 ====================
+
+CONFIG_PACKAGE_kmod-asn1-decoder=y
+CONFIG_PACKAGE_kmod-lib-crc-ccitt=y
+CONFIG_PACKAGE_kmod-lib-crc-itu-t=y
+CONFIG_PACKAGE_kmod-lib-crc16=y
+CONFIG_PACKAGE_kmod-lib-lzo=y
+CONFIG_PACKAGE_kmod-lib-raid6=y
+CONFIG_PACKAGE_kmod-lib-xor=y
+CONFIG_PACKAGE_kmod-lib-xxhash=y
+CONFIG_PACKAGE_kmod-lib-zlib-deflate=y
+CONFIG_PACKAGE_kmod-lib-zlib-inflate=y
+CONFIG_PACKAGE_kmod-lib-zstd=y
+CONFIG_PACKAGE_kmod-oid-registry=y
+CONFIG_PACKAGE_kmod-nls-base=y
+CONFIG_PACKAGE_kmod-nls-cp437=y
+CONFIG_PACKAGE_kmod-nls-iso8859-1=y
+CONFIG_PACKAGE_kmod-nls-ucs2-utils=y
+CONFIG_PACKAGE_kmod-nls-utf8=y
+
+# ==================== Netfilter / NFT ====================
+
+CONFIG_PACKAGE_kmod-nf-conncount=y
+CONFIG_PACKAGE_kmod-nf-conntrack=y
+CONFIG_PACKAGE_kmod-nf-conntrack-netlink=y
+CONFIG_PACKAGE_kmod-nf-dup-inet=y
+CONFIG_PACKAGE_kmod-nf-flow=y
+CONFIG_PACKAGE_kmod-nf-log=y
+CONFIG_PACKAGE_kmod-nf-log6=y
+CONFIG_PACKAGE_kmod-nf-nat=y
+CONFIG_PACKAGE_kmod-nf-nat6=y
+CONFIG_PACKAGE_kmod-nf-reject=y
+CONFIG_PACKAGE_kmod-nf-reject6=y
+CONFIG_PACKAGE_kmod-nf-socket=y
+CONFIG_PACKAGE_kmod-nf-tproxy=y
+CONFIG_PACKAGE_kmod-nfnetlink=y
+CONFIG_PACKAGE_kmod-nfnetlink-queue=y
+CONFIG_PACKAGE_kmod-nft-arp=y
+CONFIG_PACKAGE_kmod-nft-bridge=y
+CONFIG_PACKAGE_kmod-nft-connlimit=y
+CONFIG_PACKAGE_kmod-nft-core=y
+CONFIG_PACKAGE_kmod-nft-dup-inet=y
+CONFIG_PACKAGE_kmod-nft-fib=y
+CONFIG_PACKAGE_kmod-nft-nat=y
+CONFIG_PACKAGE_kmod-nft-netdev=y
+CONFIG_PACKAGE_kmod-nft-offload=y
+CONFIG_PACKAGE_kmod-nft-queue=y
+CONFIG_PACKAGE_kmod-nft-socket=y
+CONFIG_PACKAGE_kmod-nft-tproxy=y
+CONFIG_PACKAGE_kmod-nft-xfrm=y
+
+# ==================== 网络 / PHY / DSA ====================
+
+CONFIG_PACKAGE_kmod-dsa=y
+CONFIG_PACKAGE_kmod-dsa-qca8k=y
+CONFIG_PACKAGE_kmod-dummy=y
+CONFIG_PACKAGE_kmod-ifb=y
+CONFIG_PACKAGE_kmod-libphy=y
+CONFIG_PACKAGE_kmod-macvlan=y
+CONFIG_PACKAGE_kmod-mdio-devres=y
+CONFIG_PACKAGE_kmod-mii=y
+CONFIG_PACKAGE_kmod-net-selftests=y
+CONFIG_PACKAGE_kmod-phy-aquantia=y
+CONFIG_PACKAGE_kmod-phy-ax88796b=y
+CONFIG_PACKAGE_kmod-phy-qca83xx=y
+CONFIG_PACKAGE_kmod-phylib-qcom=y
+CONFIG_PACKAGE_kmod-phylink=y
+CONFIG_PACKAGE_kmod-qca-nss-dp=y
+CONFIG_PACKAGE_kmod-qca-ssdk=y
+
+# ==================== QCA NSS ====================
+
+CONFIG_PACKAGE_kmod-qca-nss-drv=y
 
 CONFIG_NSS_DRV_BRIDGE_ENABLE=y
 CONFIG_NSS_DRV_CRYPTO_ENABLE=y
@@ -179,375 +421,756 @@ CONFIG_NSS_DRV_VXLAN_ENABLE=y
 CONFIG_NSS_DRV_WIFIOFFLOAD_ENABLE=y
 CONFIG_NSS_DRV_WIFI_EXT_VDEV_ENABLE=y
 CONFIG_NSS_DRV_WIFI_MESH_ENABLE=y
+
+CONFIG_PACKAGE_kmod-qca-nss-drv-bridge-mgr=y
+CONFIG_PACKAGE_kmod-qca-nss-drv-eogremgr=y
+CONFIG_PACKAGE_kmod-qca-nss-drv-gre=y
+CONFIG_PACKAGE_kmod-qca-nss-drv-igs=y
+CONFIG_PACKAGE_kmod-qca-nss-drv-l2tpv2=y
+CONFIG_PACKAGE_kmod-qca-nss-drv-lag-mgr=y
+CONFIG_PACKAGE_kmod-qca-nss-drv-map-t=y
+CONFIG_PACKAGE_kmod-qca-nss-drv-match=y
+CONFIG_PACKAGE_kmod-qca-nss-drv-mirror=y
+CONFIG_PACKAGE_kmod-qca-nss-drv-netlink=y
 CONFIG_NSS_NLGRE_REDIR_ENABLE=y
+CONFIG_PACKAGE_kmod-qca-nss-drv-pppoe=y
+CONFIG_PACKAGE_kmod-qca-nss-drv-pptp=y
+CONFIG_PACKAGE_kmod-qca-nss-drv-qdisc=y
+CONFIG_PACKAGE_kmod-qca-nss-drv-tun6rd=y
+CONFIG_PACKAGE_kmod-qca-nss-drv-tunipip6=y
+CONFIG_PACKAGE_kmod-qca-nss-drv-vlan-mgr=y
+CONFIG_PACKAGE_kmod-qca-nss-drv-vxlanmgr=y
+CONFIG_PACKAGE_kmod-qca-nss-drv-wifi-meshmgr=y
+CONFIG_PACKAGE_kmod-qca-nss-ecm=y
 
-# 无线 / ath11k / NSS 硬件卸载
+# ==================== 隧道 / VPN ====================
 
-CONFIG_PACKAGE_ath11k-firmware-ipq8074-ddwrt=y
-CONFIG_PACKAGE_ipq-wifi-aliyun_ap8220=y
-CONFIG_PACKAGE_kmod-ath11k=y
-CONFIG_PACKAGE_kmod-ath11k-ahb=y
-CONFIG_PACKAGE_kmod-ath11k-pci=y
-CONFIG_ATH11K_NSS_SUPPORT=y
-CONFIG_ATH11K_THERMAL=y
-CONFIG_ATH11K_DEBUGFS_STA=y
-CONFIG_ATH11K_DEBUGFS_HTT_STATS=y
-CONFIG_PACKAGE_kmod-cfg80211=y
-CONFIG_PACKAGE_kmod-mac80211=y
-CONFIG_PACKAGE_MAC80211_DEBUGFS=y
-CONFIG_PACKAGE_MAC80211_MESH=y
-CONFIG_PACKAGE_kmod-qcom-qmi-helpers=y
-CONFIG_PACKAGE_wpad-openssl=y
-CONFIG_DRIVER_11AC_SUPPORT=y
-CONFIG_DRIVER_11AX_SUPPORT=y
-CONFIG_WPA_MBO_SUPPORT=y
-CONFIG_PACKAGE_wireless-regdb=y
-CONFIG_PACKAGE_hostapd-common=y
-CONFIG_PACKAGE_iw=y
-CONFIG_PACKAGE_wifi-scripts=y
-CONFIG_WIFI_SCRIPTS_UCODE=y
-
-# 有线 / PHY / DSA / Bonding
-
-CONFIG_PACKAGE_kmod-dsa=y
-CONFIG_PACKAGE_kmod-dsa-qca8k=y
-CONFIG_PACKAGE_kmod-libphy=y
-CONFIG_PACKAGE_kmod-phy-qca83xx=y
-CONFIG_PACKAGE_kmod-phylib-qcom=y
-CONFIG_PACKAGE_kmod-mdio-devres=y
-CONFIG_PACKAGE_kmod-mii=y
-CONFIG_PACKAGE_kmod-phylink=y
-CONFIG_PACKAGE_kmod-macvlan=y
-CONFIG_PACKAGE_kmod-ifb=y
-CONFIG_PACKAGE_kmod-dummy=y
-CONFIG_PACKAGE_ethtool=y
-CONFIG_PACKAGE_ip-full=y
-CONFIG_PACKAGE_proto-bonding=y
 CONFIG_PACKAGE_kmod-bonding=y
+CONFIG_PACKAGE_kmod-gre=y
+CONFIG_PACKAGE_kmod-gre6=y
+CONFIG_PACKAGE_kmod-inet-diag=y
+CONFIG_PACKAGE_kmod-inet-mptcp-diag=y
+CONFIG_PACKAGE_kmod-ip6-tunnel=y
+CONFIG_PACKAGE_kmod-iptunnel=y
+CONFIG_PACKAGE_kmod-iptunnel4=y
+CONFIG_PACKAGE_kmod-iptunnel6=y
+CONFIG_PACKAGE_kmod-l2tp=y
+CONFIG_PACKAGE_kmod-nat46=y
+CONFIG_PACKAGE_kmod-netlink-diag=y
+CONFIG_PACKAGE_kmod-ovpn-backports=y
+CONFIG_PACKAGE_kmod-ppp=y
+CONFIG_PACKAGE_kmod-mppe=y
+CONFIG_PACKAGE_kmod-pppoe=y
+CONFIG_PACKAGE_kmod-pppox=y
+CONFIG_PACKAGE_kmod-pptp=y
+CONFIG_PACKAGE_kmod-qrtr=y
+CONFIG_PACKAGE_kmod-qrtr-mhi=y
+CONFIG_PACKAGE_kmod-qrtr-smd=y
+CONFIG_PACKAGE_kmod-sched-core=y
+CONFIG_PACKAGE_kmod-sit=y
+CONFIG_PACKAGE_kmod-slhc=y
+CONFIG_PACKAGE_kmod-tun=y
+CONFIG_PACKAGE_kmod-udptunnel4=y
+CONFIG_PACKAGE_kmod-udptunnel6=y
+CONFIG_PACKAGE_kmod-veth=y
+CONFIG_PACKAGE_kmod-vxlan=y
+CONFIG_PACKAGE_kmod-wireguard=y
+CONFIG_PACKAGE_kmod-mhi-bus=y
 
-# USB 完整支持
+# ==================== USB ====================
 
 CONFIG_PACKAGE_kmod-usb-core=y
-CONFIG_PACKAGE_kmod-usb-common=y
-CONFIG_PACKAGE_kmod-usb3=y
 CONFIG_PACKAGE_kmod-usb-dwc3=y
 CONFIG_PACKAGE_kmod-usb-dwc3-qcom=y
-CONFIG_PACKAGE_kmod-usb-xhci-hcd=y
-CONFIG_PACKAGE_kmod-usb-storage=y
-CONFIG_PACKAGE_kmod-usb-storage-extras=y
-CONFIG_PACKAGE_kmod-usb-storage-uas=y
 CONFIG_PACKAGE_kmod-usb-net=y
 CONFIG_PACKAGE_kmod-usb-net-asix=y
 CONFIG_PACKAGE_kmod-usb-net-asix-ax88179=y
 CONFIG_PACKAGE_kmod-usb-net-cdc-eem=y
 CONFIG_PACKAGE_kmod-usb-net-cdc-ether=y
+CONFIG_PACKAGE_kmod-usb-net-cdc-mbim=y
 CONFIG_PACKAGE_kmod-usb-net-cdc-ncm=y
 CONFIG_PACKAGE_kmod-usb-net-cdc-subset=y
+CONFIG_PACKAGE_kmod-usb-net-huawei-cdc-ncm=y
+CONFIG_PACKAGE_kmod-usb-net-ipheth=y
 CONFIG_PACKAGE_kmod-usb-net-rndis=y
+CONFIG_PACKAGE_kmod-usb-net-rtl8150=y
 CONFIG_PACKAGE_kmod-usb-net-rtl8152=y
-CONFIG_PACKAGE_kmod-usb-net-qmi-wwan=y
+CONFIG_PACKAGE_kmod-usb-net-sierrawireless=y
+CONFIG_PACKAGE_kmod-usb-ohci=y
+CONFIG_PACKAGE_kmod-usb-roles=y
+CONFIG_PACKAGE_kmod-usb-xhci-hcd=y
+CONFIG_PACKAGE_kmod-usb3=y
+CONFIG_PACKAGE_kmod-usb-common=y
 CONFIG_PACKAGE_kmod-usb-serial=y
 CONFIG_PACKAGE_kmod-usb-serial-qualcomm=y
 CONFIG_PACKAGE_kmod-usb-serial-wwan=y
 CONFIG_PACKAGE_kmod-usb-wdm=y
-CONFIG_PACKAGE_usbutils=y
-CONFIG_PACKAGE_usb-modeswitch=y
-CONFIG_PACKAGE_usbids=y
-CONFIG_PACKAGE_usbmuxd=y
+CONFIG_PACKAGE_kmod-usb-storage=y
+CONFIG_PACKAGE_kmod-usb-storage-extras=y
+CONFIG_PACKAGE_kmod-usb-storage-uas=y
+CONFIG_PACKAGE_kmod-usb-uhci=y
+CONFIG_PACKAGE_kmod-media-controller=y
 
-# 文件系统 / 存储 / MTD / NAND
+# ==================== 无线 ====================
 
-CONFIG_PACKAGE_kmod-fs-ext4=y
-CONFIG_PACKAGE_kmod-fs-f2fs=y
-CONFIG_PACKAGE_kmod-fs-ntfs3=y
-CONFIG_PACKAGE_kmod-fs-exfat=y
-CONFIG_PACKAGE_kmod-fs-vfat=y
-CONFIG_PACKAGE_kmod-fs-btrfs=y
-CONFIG_PACKAGE_kmod-fs-netfs=y
-CONFIG_PACKAGE_kmod-fs-smbfs-common=y
-CONFIG_PACKAGE_kmod-fuse=y
-CONFIG_PACKAGE_e2fsprogs=y
-CONFIG_PACKAGE_f2fs-tools=y
-CONFIG_PACKAGE_f2fsck=y
-CONFIG_PACKAGE_mkf2fs=y
-CONFIG_PACKAGE_ntfs3-mount=y
-CONFIG_PACKAGE_exfat-fsck=y
-CONFIG_PACKAGE_exfat-mkfs=y
-CONFIG_PACKAGE_btrfs-progs=y
-CONFIG_PACKAGE_block-mount=y
-CONFIG_PACKAGE_automount=y
-CONFIG_PACKAGE_losetup=y
-CONFIG_PACKAGE_blkid=y
-CONFIG_PACKAGE_lsblk=y
-CONFIG_PACKAGE_parted=y
-CONFIG_PACKAGE_fdisk=y
-CONFIG_PACKAGE_gdisk=y
-CONFIG_PACKAGE_sgdisk=y
-CONFIG_PACKAGE_sfdisk=y
-CONFIG_PACKAGE_ubi-utils=y
-CONFIG_PACKAGE_nand-utils=y
-CONFIG_PACKAGE_mtd=y
-CONFIG_PACKAGE_fstools=y
-CONFIG_FSTOOLS_UBIFS_EXTROOT=y
+CONFIG_PACKAGE_kmod-ath=y
+CONFIG_ATH_USER_REGD=y
+CONFIG_PACKAGE_ATH_DFS=y
+CONFIG_ATH10K_LEDS=y
+CONFIG_ATH10K_THERMAL=y
+CONFIG_PACKAGE_kmod-ath11k=y
+CONFIG_ATH11K_THERMAL=y
+CONFIG_ATH11K_NSS_SUPPORT=y
+CONFIG_ATH11K_DEBUGFS_STA=y
+CONFIG_ATH11K_DEBUGFS_HTT_STATS=y
+CONFIG_PACKAGE_kmod-ath11k-ahb=y
+CONFIG_PACKAGE_kmod-ath11k-pci=y
+CONFIG_PACKAGE_kmod-cfg80211=y
+CONFIG_PACKAGE_kmod-mac80211=y
+CONFIG_PACKAGE_MAC80211_DEBUGFS=y
+CONFIG_PACKAGE_MAC80211_MESH=y
+CONFIG_PACKAGE_kmod-qcom-qmi-helpers=y
+CONFIG_DRIVER_11AC_SUPPORT=y
+CONFIG_DRIVER_11AX_SUPPORT=y
+CONFIG_WPA_MBO_SUPPORT=y
 
-# 网络基础 / 防火墙 / Netfilter
+# ==================== 编程语言 / 运行环境 ====================
 
-CONFIG_PACKAGE_firewall4=y
-CONFIG_PACKAGE_nftables=y
-CONFIG_PACKAGE_nftables-json=y
-CONFIG_PACKAGE_kmod-nft-core=y
-CONFIG_PACKAGE_kmod-nft-offload=y
-CONFIG_PACKAGE_kmod-nft-nat=y
-CONFIG_PACKAGE_kmod-nft-fullcone=y
-CONFIG_PACKAGE_kmod-nft-bridge=y
-CONFIG_PACKAGE_kmod-nft-netdev=y
-CONFIG_PACKAGE_kmod-nft-fib=y
-CONFIG_PACKAGE_kmod-nft-socket=y
-CONFIG_PACKAGE_kmod-nft-tproxy=y
-CONFIG_PACKAGE_kmod-nft-queue=y
-CONFIG_PACKAGE_kmod-nft-connlimit=y
-CONFIG_PACKAGE_kmod-nft-arp=y
-CONFIG_PACKAGE_kmod-nft-xfrm=y
-CONFIG_PACKAGE_kmod-nf-conntrack=y
-CONFIG_PACKAGE_kmod-nf-conntrack-netlink=y
-CONFIG_PACKAGE_kmod-nf-nat=y
-CONFIG_PACKAGE_kmod-nf-nat6=y
-CONFIG_PACKAGE_kmod-nf-flow=y
-CONFIG_PACKAGE_kmod-nf-reject=y
-CONFIG_PACKAGE_kmod-nf-reject6=y
-CONFIG_PACKAGE_kmod-nf-log=y
-CONFIG_PACKAGE_kmod-nf-log6=y
-CONFIG_PACKAGE_kmod-nf-socket=y
-CONFIG_PACKAGE_kmod-nf-tproxy=y
-CONFIG_PACKAGE_kmod-nfnetlink=y
-CONFIG_PACKAGE_kmod-nfnetlink-queue=y
+CONFIG_GOLANG_BUILD_BOOTSTRAP=y
+CONFIG_PACKAGE_lua=y
+CONFIG_LUA_ECO_OPENSSL=y
+CONFIG_HAS_LUAJIT_ARCH=y
+CONFIG_NODEJS_22=y
+CONFIG_NODEJS_HOST_BIN=y
 
-# DNS / DHCP / IPv6 网络服务
+CONFIG_PACKAGE_ucode=y
+CONFIG_PACKAGE_ucode-mod-digest=y
+CONFIG_PACKAGE_ucode-mod-fs=y
+CONFIG_PACKAGE_ucode-mod-log=y
+CONFIG_PACKAGE_ucode-mod-math=y
+CONFIG_PACKAGE_ucode-mod-nl80211=y
+CONFIG_PACKAGE_ucode-mod-rtnl=y
+CONFIG_PACKAGE_ucode-mod-ubus=y
+CONFIG_PACKAGE_ucode-mod-uci=y
+CONFIG_PACKAGE_ucode-mod-uloop=y
+CONFIG_PACKAGE_ucode-mod-html=y
+CONFIG_PACKAGE_ucode-mod-lua=y
 
-CONFIG_PACKAGE_dnsmasq-full=y
-CONFIG_PACKAGE_dnsmasq_full_dhcp=y
-CONFIG_PACKAGE_dnsmasq_full_dhcpv6=y
-CONFIG_PACKAGE_dnsmasq_full_dnssec=y
-CONFIG_PACKAGE_dnsmasq_full_auth=y
-CONFIG_PACKAGE_dnsmasq_full_nftset=y
-CONFIG_PACKAGE_dnsmasq_full_conntrack=y
-CONFIG_PACKAGE_odhcp6c=y
-CONFIG_PACKAGE_odhcpd-ipv6only=y
+# ==================== 加密库 ====================
 
-# PPP / 隧道 / VPN / 虚拟网络
+CONFIG_PACKAGE_libattr=y
+CONFIG_PACKAGE_libgnutls=y
+CONFIG_GNUTLS_DTLS_SRTP=y
+CONFIG_GNUTLS_ALPN=y
+CONFIG_GNUTLS_OCSP=y
+CONFIG_GNUTLS_HEARTBEAT=y
+CONFIG_GNUTLS_PSK=y
+CONFIG_GNUTLS_ANON=y
 
-CONFIG_PACKAGE_ppp=y
-CONFIG_PACKAGE_ppp-mod-pppoe=y
-CONFIG_PACKAGE_kmod-ppp=y
-CONFIG_PACKAGE_kmod-pppoe=y
-CONFIG_PACKAGE_kmod-pppox=y
-CONFIG_PACKAGE_kmod-mppe=y
-CONFIG_PACKAGE_kmod-pptp=y
-CONFIG_PACKAGE_kmod-gre=y
-CONFIG_PACKAGE_kmod-gre6=y
-CONFIG_PACKAGE_kmod-ip6-tunnel=y
-CONFIG_PACKAGE_kmod-iptunnel=y
-CONFIG_PACKAGE_kmod-iptunnel4=y
-CONFIG_PACKAGE_kmod-iptunnel6=y
-CONFIG_PACKAGE_kmod-sit=y
-CONFIG_PACKAGE_kmod-tun=y
-CONFIG_PACKAGE_kmod-veth=y
-CONFIG_PACKAGE_kmod-vxlan=y
-CONFIG_PACKAGE_kmod-wireguard=y
-CONFIG_PACKAGE_kmod-l2tp=y
-CONFIG_PACKAGE_kmod-nat46=y
-CONFIG_PACKAGE_6rd=y
-CONFIG_PACKAGE_relayd=y
+CONFIG_PACKAGE_libopenssl=y
+CONFIG_OPENSSL_OPTIMIZE_SPEED=y
+CONFIG_OPENSSL_WITH_ASM=y
+CONFIG_OPENSSL_WITH_DEPRECATED=y
+CONFIG_OPENSSL_WITH_ERROR_MESSAGES=y
+CONFIG_OPENSSL_WITH_TLS13=y
+CONFIG_OPENSSL_WITH_SRP=y
+CONFIG_OPENSSL_WITH_CMS=y
+CONFIG_OPENSSL_WITH_CHACHA_POLY1305=y
+CONFIG_OPENSSL_PREFER_CHACHA_OVER_GCM=y
+CONFIG_OPENSSL_WITH_PSK=y
+CONFIG_OPENSSL_WITH_IDEA=y
+CONFIG_OPENSSL_WITH_SEED=y
+CONFIG_OPENSSL_WITH_MDC2=y
+CONFIG_OPENSSL_WITH_WHIRLPOOL=y
+CONFIG_OPENSSL_ENGINE=y
+CONFIG_PACKAGE_libopenssl-conf=y
+CONFIG_PACKAGE_libopenssl-legacy=y
 
-# 系统基础组件
+# ==================== WolfSSL ====================
 
-CONFIG_PACKAGE_base-files=y
-CONFIG_PACKAGE_busybox=y
-CONFIG_PACKAGE_ca-bundle=y
-CONFIG_PACKAGE_dropbear=y
-CONFIG_PACKAGE_libc=y
-CONFIG_PACKAGE_libgcc=y
-CONFIG_PACKAGE_libpthread=y
-CONFIG_PACKAGE_librt=y
-CONFIG_PACKAGE_libstdcpp=y
-CONFIG_PACKAGE_logd=y
-CONFIG_PACKAGE_netifd=y
-CONFIG_PACKAGE_procd=y
-CONFIG_PACKAGE_procd-seccomp=y
-CONFIG_PACKAGE_procd-ujail=y
+CONFIG_WOLFSSL_HAS_AES_CCM=y
+CONFIG_WOLFSSL_HAS_CHACHA_POLY=y
+CONFIG_WOLFSSL_HAS_DH=y
+CONFIG_WOLFSSL_HAS_ARC4=y
+CONFIG_WOLFSSL_HAS_CERTGEN=y
+CONFIG_WOLFSSL_HAS_TLSV10=y
+CONFIG_WOLFSSL_HAS_TLSV13=y
+CONFIG_WOLFSSL_HAS_SESSION_TICKET=y
+CONFIG_WOLFSSL_HAS_OCSP=y
+CONFIG_WOLFSSL_HAS_WPAS=y
+CONFIG_WOLFSSL_HAS_ECC25519=y
+CONFIG_WOLFSSL_HAS_OPENVPN=y
+CONFIG_WOLFSSL_ALT_NAMES=y
 
-# UBUS / UCI / RPC / 系统工具
+# ==================== Apple USB ====================
 
-CONFIG_PACKAGE_rpcd=y
-CONFIG_PACKAGE_rpcd-mod-file=y
-CONFIG_PACKAGE_rpcd-mod-iwinfo=y
-CONFIG_PACKAGE_rpcd-mod-ucode=y
+CONFIG_PACKAGE_libimobiledevice=y
+CONFIG_PACKAGE_libimobiledevice-glue=y
+CONFIG_PACKAGE_libplist=y
+CONFIG_PACKAGE_libusbmuxd=y
+
+# ==================== 基础库 ====================
+
+CONFIG_PACKAGE_jansson=y
+CONFIG_PACKAGE_libavahi-client=y
+CONFIG_PACKAGE_libavahi-dbus-support=y
+CONFIG_PACKAGE_libblkid=y
+CONFIG_PACKAGE_libblobmsg-json=y
+CONFIG_PACKAGE_libbpf=y
+CONFIG_PACKAGE_libcap=y
+CONFIG_PACKAGE_libcap-ng=y
+CONFIG_PACKAGE_libcomerr=y
+CONFIG_PACKAGE_libcurl=y
+
+# CURL 功能
+CONFIG_LIBCURL_OPENSSL=y
+CONFIG_LIBCURL_FILE=y
+CONFIG_LIBCURL_FTP=y
+CONFIG_LIBCURL_HTTP=y
+CONFIG_LIBCURL_COOKIES=y
+CONFIG_LIBCURL_TFTP=y
+CONFIG_LIBCURL_HTTP2=y
+CONFIG_LIBCURL_PROXY=y
+CONFIG_LIBCURL_CRYPTO_AUTH=y
+CONFIG_LIBCURL_TLS_SRP=y
+CONFIG_LIBCURL_THREADED_RESOLVER=y
+CONFIG_LIBCURL_ZLIB=y
+CONFIG_LIBCURL_UNIX_SOCKETS=y
+CONFIG_LIBCURL_HTTP_AUTH=y
+
+# 其他基础库
+CONFIG_PACKAGE_libdaemon=y
+CONFIG_PACKAGE_libdbus=y
+CONFIG_PACKAGE_libe2p=y
+CONFIG_PACKAGE_libelf=y
+CONFIG_PACKAGE_libevdev=y
+CONFIG_PACKAGE_libexpat=y
+CONFIG_PACKAGE_libext2fs=y
+CONFIG_PACKAGE_libf2fs=y
+CONFIG_PACKAGE_libfdisk=y
+CONFIG_PACKAGE_libgmp=y
+CONFIG_PACKAGE_libiperf3=y
+CONFIG_PACKAGE_libiwinfo=y
+CONFIG_PACKAGE_libjson-c=y
+CONFIG_PACKAGE_liblua=y
+CONFIG_PACKAGE_liblucihttp=y
+CONFIG_PACKAGE_liblucihttp-lua=y
+CONFIG_PACKAGE_liblucihttp-ucode=y
+CONFIG_PACKAGE_liblzo=y
+CONFIG_PACKAGE_libmnl=y
+CONFIG_PACKAGE_libmount=y
+CONFIG_PACKAGE_libncurses=y
+CONFIG_PACKAGE_libnetfilter-conntrack=y
+CONFIG_PACKAGE_libnettle=y
+CONFIG_PACKAGE_libnfnetlink=y
+CONFIG_PACKAGE_libnftnl=y
+CONFIG_PACKAGE_libnghttp2=y
+CONFIG_PACKAGE_libnl-tiny=y
+CONFIG_PACKAGE_libnvme=y
+CONFIG_PACKAGE_libparted=y
+CONFIG_PACKAGE_libpopt=y
+CONFIG_PACKAGE_libreadline=y
+CONFIG_PACKAGE_libsmartcols=y
+CONFIG_PACKAGE_libss=y
+CONFIG_PACKAGE_libtasn1=y
+CONFIG_PACKAGE_libtirpc=y
+CONFIG_PACKAGE_libubox=y
+CONFIG_PACKAGE_libubus=y
+CONFIG_PACKAGE_libubus-lua=y
+CONFIG_PACKAGE_libuci=y
+CONFIG_PACKAGE_libuclient=y
+CONFIG_PACKAGE_libucode=y
+CONFIG_PACKAGE_libudebug=y
+CONFIG_PACKAGE_libudev-zero=y
+CONFIG_PACKAGE_liburing=y
+CONFIG_PACKAGE_libusb-1.0=y
+CONFIG_PACKAGE_libustream-openssl=y
+CONFIG_PACKAGE_libuuid=y
+CONFIG_PACKAGE_libxml2=y
+CONFIG_PACKAGE_musl-fts=y
 CONFIG_PACKAGE_rpcd-mod-luci=y
 CONFIG_PACKAGE_rpcd-mod-rrdns=y
-CONFIG_PACKAGE_ubox=y
-CONFIG_PACKAGE_ubus=y
-CONFIG_PACKAGE_ubusd=y
-CONFIG_PACKAGE_uci=y
-CONFIG_PACKAGE_urandom-seed=y
-CONFIG_PACKAGE_urngd=y
-CONFIG_PACKAGE_usign=y
-CONFIG_PACKAGE_openwrt-keyring=y
-CONFIG_PACKAGE_jsonfilter=y
-CONFIG_PACKAGE_jshn=y
-CONFIG_PACKAGE_getrandom=y
-CONFIG_PACKAGE_fwtool=y
-CONFIG_PACKAGE_resolveip=y
-CONFIG_PACKAGE_uclient-fetch=y
-CONFIG_PACKAGE_libustream-openssl=y
-CONFIG_PACKAGE_uboot-envtools=y
-CONFIG_PACKAGE_cpufreq=y
-CONFIG_PACKAGE_autocore=y
+CONFIG_PACKAGE_terminfo=y
+CONFIG_PACKAGE_zlib=y
 
-# LuCI 基础 / Web 管理界面
+# ==================== LuCI ====================
 
 CONFIG_PACKAGE_luci=y
 CONFIG_PACKAGE_luci-light=y
 CONFIG_PACKAGE_luci-base=y
+CONFIG_LUCI_JSMIN=y
+CONFIG_LUCI_CSSTIDY=y
+CONFIG_LUCI_UTMIN=y
+CONFIG_LUCI_LANG_zh_Hans=y
 CONFIG_PACKAGE_luci-compat=y
 CONFIG_PACKAGE_luci-lua-runtime=y
 CONFIG_PACKAGE_luci-mod-admin-full=y
 CONFIG_PACKAGE_luci-mod-network=y
 CONFIG_PACKAGE_luci-mod-status=y
 CONFIG_PACKAGE_luci-mod-system=y
-CONFIG_PACKAGE_luci-theme-bootstrap=y
 
-# LuCI 协议 / 库 / 前端优化
-
-CONFIG_PACKAGE_stuntman-client=y
-CONFIG_PACKAGE_natmapt=y
-CONFIG_PACKAGE_luci-app-natmapt=y
-CONFIG_PACKAGE_coreutils-timeout=y
-
-
-CONFIG_PACKAGE_fullconenat-sonic=y
-
-CONFIG_PACKAGE_luci-proto-ipv6=y
-CONFIG_PACKAGE_luci-proto-ppp=y
-CONFIG_PACKAGE_luci-proto-relay=y
-CONFIG_PACKAGE_luci-lib-base=y
-CONFIG_PACKAGE_luci-lib-ip=y
-CONFIG_PACKAGE_luci-lib-jsonc=y
-CONFIG_PACKAGE_luci-lib-nixio=y
-CONFIG_PACKAGE_luci-lib-nixio_openssl=y
-CONFIG_LUCI_JSMIN=y
-CONFIG_LUCI_CSSTIDY=y
-CONFIG_LUCI_UTMIN=y
-CONFIG_LUCI_LANG_zh_Hans=y
-
-# LuCI 中文语言包
-
-CONFIG_PACKAGE_luci-i18n-base-zh-cn=y
-CONFIG_PACKAGE_luci-i18n-firewall-zh-cn=y
-CONFIG_PACKAGE_luci-i18n-package-manager-zh-cn=y
-CONFIG_PACKAGE_luci-i18n-cpufreq-zh-cn=y
-CONFIG_PACKAGE_luci-i18n-autoreboot-zh-cn=y
-CONFIG_PACKAGE_luci-i18n-passwall-zh-cn=y
-CONFIG_PACKAGE_luci-i18n-smartdns-zh-cn=y
-CONFIG_PACKAGE_luci-i18n-samba4-zh-cn=y
-CONFIG_PACKAGE_luci-i18n-ttyd-zh-cn=y
-CONFIG_PACKAGE_luci-i18n-upnp-zh-cn=y
-CONFIG_PACKAGE_luci-i18n-partexp-zh-cn=y
-
-# LuCI 应用
-
-CONFIG_PACKAGE_luci-app-firewall=y
-CONFIG_PACKAGE_luci-app-package-manager=y
-CONFIG_PACKAGE_luci-app-cpufreq=y
+# LuCI 插件
+CONFIG_PACKAGE_luci-app-aurora-config=y
 CONFIG_PACKAGE_luci-app-autoreboot=y
-CONFIG_PACKAGE_luci-app-passwall=y
-CONFIG_PACKAGE_luci-app-smartdns=y
-CONFIG_PACKAGE_luci-app-samba4=y
-CONFIG_PACKAGE_luci-app-ttyd=y
-CONFIG_PACKAGE_luci-app-upnp=y
-CONFIG_PACKAGE_luci-app-partexp=y
-CONFIG_PACKAGE_luci-app-mosdns=y
-
-CONFIG_PACKAGE_kmod-tcp-bbr=y
-# CONFIG_SIGN_FIRMWARE is not set
-CONFIG_PACKAGE_luci-app-syncdial=n
-
-CONFIG_PACKAGE_luci-app-mosdns=y
-CONFIG_PACKAGE_luci-app-openclash=n
+CONFIG_PACKAGE_luci-app-firewall=y
+CONFIG_PACKAGE_luci-app-fullconenat-sonic=y
+# CONFIG_PACKAGE_luci-app-3cat is not set
+# CONFIG_PACKAGE_luci-app-3ginfo-lite is not set
+# CONFIG_PACKAGE_luci-app-acl is not set
+# CONFIG_PACKAGE_luci-app-acme is not set
+# CONFIG_PACKAGE_luci-app-adblock is not set
+# CONFIG_PACKAGE_luci-app-adblock-fast is not set
+# CONFIG_PACKAGE_luci-app-adguardhome is not set
+# CONFIG_PACKAGE_luci-app-advanced is not set
+# CONFIG_PACKAGE_luci-app-advanced-reboot is not set
+# CONFIG_PACKAGE_luci-app-airplay2 is not set
+# CONFIG_PACKAGE_luci-app-aliddns is not set
+# CONFIG_PACKAGE_luci-app-alpha-config is not set
+# CONFIG_PACKAGE_luci-app-amlogic is not set
+# CONFIG_PACKAGE_luci-app-amule is not set
+# CONFIG_PACKAGE_luci-app-antiblock is not set
+# CONFIG_PACKAGE_luci-app-apinger is not set
+# CONFIG_PACKAGE_luci-app-appfilter is not set
+# CONFIG_PACKAGE_luci-app-argon-config is not set
+# CONFIG_PACKAGE_luci-app-aria2 is not set
+# CONFIG_PACKAGE_luci-app-arpbind is not set
+# CONFIG_PACKAGE_luci-app-athena-led is not set
+# CONFIG_PACKAGE_luci-app-attendedsysupgrade is not set
+CONFIG_PACKAGE_luci-app-autoreboot=y
+# CONFIG_PACKAGE_luci-app-babeld is not set
+# CONFIG_PACKAGE_luci-app-baidudrive is not set
+# CONFIG_PACKAGE_luci-app-banip is not set
+# CONFIG_PACKAGE_luci-app-bcp38 is not set
+# CONFIG_PACKAGE_luci-app-bitsrunlogin-go is not set
+# CONFIG_PACKAGE_luci-app-bmx7 is not set
+# CONFIG_PACKAGE_luci-app-cd8021x is not set
+# CONFIG_PACKAGE_luci-app-chrony is not set
+# CONFIG_PACKAGE_luci-app-cifs-mount is not set
+# CONFIG_PACKAGE_luci-app-cjdns is not set
+# CONFIG_PACKAGE_luci-app-clamav is not set
+# CONFIG_PACKAGE_luci-app-clashoo is not set
+# CONFIG_PACKAGE_luci-app-cloudflared is not set
+# CONFIG_PACKAGE_luci-app-commands is not set
+# CONFIG_PACKAGE_luci-app-coovachilli is not set
+CONFIG_PACKAGE_luci-app-cpufreq=y
+# CONFIG_PACKAGE_luci-app-cpulimit is not set
+# CONFIG_PACKAGE_luci-app-crowdsec-firewall-bouncer is not set
+# CONFIG_PACKAGE_luci-app-csshnpd is not set
+CONFIG_PACKAGE_luci-app-daede_daed=y
+# CONFIG_PACKAGE_luci-app-daede_dae is not set
+# CONFIG_PACKAGE_luci-app-dawn is not set
+# CONFIG_PACKAGE_luci-app-ddns is not set
+# CONFIG_PACKAGE_luci-app-ddns-go is not set
+# CONFIG_PACKAGE_luci-app-ddnsto is not set
+# CONFIG_PACKAGE_luci-app-design-config is not set
+# CONFIG_PACKAGE_luci-app-diskman is not set
+# CONFIG_PACKAGE_luci-app-dnsfilter is not set
+# CONFIG_PACKAGE_luci-app-docker is not set
+# CONFIG_PACKAGE_luci-app-dockerman is not set
+# CONFIG_PACKAGE_luci-app-dockermanager is not set
+# CONFIG_PACKAGE_luci-app-dufs is not set
+# CONFIG_PACKAGE_luci-app-dump1090 is not set
+# CONFIG_PACKAGE_luci-app-easymesh is not set
+# CONFIG_PACKAGE_luci-app-email is not set
+# CONFIG_PACKAGE_luci-app-eoip is not set
+# CONFIG_PACKAGE_luci-app-eqos is not set
+# CONFIG_PACKAGE_luci-app-example is not set
+# CONFIG_PACKAGE_luci-app-fancontrol is not set
+# CONFIG_PACKAGE_luci-app-fastnet is not set
+# CONFIG_PACKAGE_luci-app-fchomo is not set
+# CONFIG_PACKAGE_luci-app-fileassistant is not set
+# CONFIG_PACKAGE_luci-app-filebrowser is not set
+# CONFIG_PACKAGE_luci-app-filebrowser-go is not set
+# CONFIG_PACKAGE_luci-app-filemanager is not set
+CONFIG_PACKAGE_luci-app-firewall=y
+# CONFIG_PACKAGE_luci-app-floatip is not set
+# CONFIG_PACKAGE_luci-app-frpc is not set
+# CONFIG_PACKAGE_luci-app-frps is not set
+CONFIG_PACKAGE_luci-app-fullconenat-sonic=y
+# CONFIG_PACKAGE_luci-app-fwknopd is not set
+# CONFIG_PACKAGE_luci-app-gost is not set
+# CONFIG_PACKAGE_luci-app-guest-wifi is not set
+# CONFIG_PACKAGE_luci-app-hd-idle is not set
 CONFIG_PACKAGE_luci-app-homeproxy=y
-
-
-CONFIG_PACKAGE_luci-app-turboacc=n
-CONFIG_PACKAGE_luci-app-turboacc_INCLUDE_BBR_CCA=n
-CONFIG_PACKAGE_luci-app-turboacc_INCLUDE_OFFLOADING=n
+# CONFIG_PACKAGE_luci-app-honk is not set
+# CONFIG_PACKAGE_luci-app-https-dns-proxy is not set
+# CONFIG_PACKAGE_luci-app-ipsec-vpnd is not set
+# CONFIG_PACKAGE_luci-app-irqbalance is not set
+# CONFIG_PACKAGE_luci-app-istoreenhance is not set
+# CONFIG_PACKAGE_luci-app-kai is not set
+# CONFIG_PACKAGE_luci-app-kaiplus is not set
+# CONFIG_PACKAGE_luci-app-keepalived is not set
+# CONFIG_PACKAGE_luci-app-ksmbd is not set
+# CONFIG_PACKAGE_luci-app-ledtrig-rssi is not set
+# CONFIG_PACKAGE_luci-app-ledtrig-switch is not set
+# CONFIG_PACKAGE_luci-app-ledtrig-usbport is not set
+# CONFIG_PACKAGE_luci-app-librespeed is not set
+# CONFIG_PACKAGE_luci-app-libreswan is not set
+# CONFIG_PACKAGE_luci-app-linkease is not set
+# CONFIG_PACKAGE_luci-app-linkeasefull is not set
+# CONFIG_PACKAGE_luci-app-lldpd is not set
+# CONFIG_PACKAGE_luci-app-lorawan-basicstation is not set
+# CONFIG_PACKAGE_luci-app-lucky is not set
+# CONFIG_PACKAGE_luci-app-microsocks is not set
+# CONFIG_PACKAGE_luci-app-minidlna is not set
+# CONFIG_PACKAGE_luci-app-modemband is not set
+# CONFIG_PACKAGE_luci-app-momo is not set
+CONFIG_PACKAGE_luci-app-mosdns=y
+# CONFIG_PACKAGE_luci-app-mosquitto is not set
+# CONFIG_PACKAGE_luci-app-msd_lite is not set
+# CONFIG_PACKAGE_luci-app-music-remote-center is not set
+# CONFIG_PACKAGE_luci-app-mwan3 is not set
+# CONFIG_PACKAGE_luci-app-n2n is not set
+# CONFIG_PACKAGE_luci-app-natmap is not set
 CONFIG_PACKAGE_luci-app-natmapt=y
-
-
-
+# CONFIG_PACKAGE_luci-app-netdata is not set
+# CONFIG_PACKAGE_luci-app-netwizard is not set
+# CONFIG_PACKAGE_luci-app-nextdns is not set
+# CONFIG_PACKAGE_luci-app-nfs is not set
+# CONFIG_PACKAGE_luci-app-ngrokc is not set
+# CONFIG_PACKAGE_luci-app-nikki is not set
+# CONFIG_PACKAGE_luci-app-njitclient is not set
+# CONFIG_PACKAGE_luci-app-nlbwmon is not set
+# CONFIG_PACKAGE_luci-app-nps is not set
+# CONFIG_PACKAGE_luci-app-nut is not set
+# CONFIG_PACKAGE_luci-app-oaf is not set
+# CONFIG_PACKAGE_luci-app-ocserv is not set
+# CONFIG_PACKAGE_luci-app-oled is not set
+# CONFIG_PACKAGE_luci-app-olsr is not set
+# CONFIG_PACKAGE_luci-app-olsr-services is not set
+# CONFIG_PACKAGE_luci-app-olsr-viz is not set
+# CONFIG_PACKAGE_luci-app-omcproxy is not set
+# CONFIG_PACKAGE_luci-app-openclash is not set
+# CONFIG_PACKAGE_iptables-mod-tproxy is not set
+# CONFIG_PACKAGE_iptables-mod-extra is not set
+# CONFIG_PACKAGE_ipset is not set
+# CONFIG_PACKAGE_luci-app-openclaw is not set
+# CONFIG_PACKAGE_luci-app-openlist is not set
+# CONFIG_PACKAGE_luci-app-openlist2 is not set
+# CONFIG_PACKAGE_luci-app-openthread is not set
+# CONFIG_PACKAGE_luci-app-openvpn-server is not set
+# CONFIG_PACKAGE_luci-app-openwisp is not set
+# CONFIG_PACKAGE_luci-app-oscam is not set
+# CONFIG_PACKAGE_luci-app-p910nd is not set
+CONFIG_PACKAGE_luci-app-package-manager=y
+# CONFIG_PACKAGE_luci-app-pagekitec is not set
 CONFIG_PACKAGE_luci-app-partexp=y
-# PassWall 功能组件
+CONFIG_PACKAGE_luci-app-passwall=y
 
+#
+# Configuration
+#
+# CONFIG_PACKAGE_luci-app-passwall_Iptables_Transparent_Proxy is not set
 CONFIG_PACKAGE_luci-app-passwall_Nftables_Transparent_Proxy=y
 CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Geoview=y
 CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Haproxy=y
+# CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Hysteria is not set
+# CONFIG_PACKAGE_luci-app-passwall_INCLUDE_NaiveProxy is not set
 CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Shadowsocks_Rust_Client=y
+# CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Shadowsocks_Rust_Server is not set
 CONFIG_PACKAGE_luci-app-passwall_INCLUDE_ShadowsocksR_Libev_Client=y
+# CONFIG_PACKAGE_luci-app-passwall_INCLUDE_ShadowsocksR_Libev_Server is not set
+# CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Shadow_TLS is not set
 CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Simple_Obfs=y
 CONFIG_PACKAGE_luci-app-passwall_INCLUDE_SingBox=y
+# CONFIG_PACKAGE_luci-app-passwall_INCLUDE_V2ray_Geodata is not set
 CONFIG_PACKAGE_luci-app-passwall_INCLUDE_V2ray_Plugin=y
 # CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Xray is not set
+# CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Xray_Plugin is not set
+# end of Configuration
 
-# 网络代理 / DNS / 分流工具
+# CONFIG_PACKAGE_luci-app-passwall2 is not set
+# CONFIG_PACKAGE_luci-app-pbr is not set
+# CONFIG_PACKAGE_luci-app-pppoe-relay is not set
+# CONFIG_PACKAGE_luci-app-pppoe-server is not set
+# CONFIG_PACKAGE_luci-app-privoxy is not set
+# CONFIG_PACKAGE_luci-app-ps3netsrv is not set
+# CONFIG_PACKAGE_luci-app-qbittorrent is not set
+# CONFIG_PACKAGE_luci-app-qos-legacy is not set
+# CONFIG_PACKAGE_luci-app-qosify is not set
+# CONFIG_PACKAGE_luci-app-quickfile is not set
+# CONFIG_PACKAGE_luci-app-radicale3 is not set
+# CONFIG_PACKAGE_luci-app-ramfree is not set
+# CONFIG_PACKAGE_luci-app-rclone is not set
+CONFIG_PACKAGE_luci-app-rclone_INCLUDE_rclone-webui=y
+CONFIG_PACKAGE_luci-app-rclone_INCLUDE_rclone-ng=y
+# CONFIG_PACKAGE_luci-app-rp-pppoe-server is not set
+# CONFIG_PACKAGE_luci-app-rtp2httpd is not set
+# CONFIG_PACKAGE_luci-app-rustdesk-server is not set
+CONFIG_PACKAGE_luci-app-samba4=y
+# CONFIG_PACKAGE_luci-app-scutclient is not set
+# CONFIG_PACKAGE_luci-app-ser2net is not set
+# CONFIG_PACKAGE_luci-app-sfp-info is not set
+# CONFIG_PACKAGE_luci-app-shunt is not set
+CONFIG_PACKAGE_luci-app-smartdns=y
+# CONFIG_PACKAGE_luci-app-smartdns_INCLUDE_smartdns_ui is not set
+# CONFIG_PACKAGE_luci-app-sms-tool-js is not set
+# CONFIG_PACKAGE_luci-app-snmpd is not set
+# CONFIG_PACKAGE_luci-app-softether is not set
+# CONFIG_PACKAGE_luci-app-softethervpn is not set
+# CONFIG_PACKAGE_luci-app-spotifyd is not set
+# CONFIG_PACKAGE_luci-app-sqm is not set
+# CONFIG_PACKAGE_luci-app-squid is not set
+# CONFIG_PACKAGE_luci-app-sshtunnel is not set
+# CONFIG_PACKAGE_luci-app-ssr-plus is not set
+CONFIG_PACKAGE_luci-app-ssr-plus_Nftables_Transparent_Proxy=y
+CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Shadowsocks_NONE_Client=y
+# CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Shadowsocks_Rust_Client is not set
+CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Shadowsocks_NONE_Server=y
+# CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Shadowsocks_Rust_Server is not set
+CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_NONE_V2RAY=y
+# CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Xray is not set
+CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_ChinaDNS_NG=y
+# CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_MosDNS is not set
+CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Http_Proxy=y
+CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Mihomo=y
+# CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_GeoData is not set
+# CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Shadow_TLS is not set
+# CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Kcptun is not set
+# CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_NaiveProxy is not set
+# CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Shadowsocks_Simple_Obfs is not set
+# CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Shadowsocks_V2ray_Plugin is not set
+CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_ShadowsocksR_Libev_Client=y
+# CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_ShadowsocksR_Libev_Server is not set
+# CONFIG_PACKAGE_luci-app-statistics is not set
+# CONFIG_PACKAGE_luci-app-subconverter is not set
+# CONFIG_PACKAGE_luci-app-syncdial is not set
+# CONFIG_PACKAGE_luci-app-syncthing is not set
+# CONFIG_PACKAGE_luci-app-sysuh3c is not set
+# CONFIG_PACKAGE_luci-app-tailscale-community is not set
+# CONFIG_PACKAGE_luci-app-timewol is not set
+# CONFIG_PACKAGE_luci-app-tinyproxy is not set
+# CONFIG_PACKAGE_luci-app-tor is not set
+# CONFIG_PACKAGE_luci-app-transmission is not set
+# CONFIG_PACKAGE_luci-app-travelmate is not set
+CONFIG_PACKAGE_luci-app-ttyd=y
+# CONFIG_PACKAGE_luci-app-ua2f is not set
+# CONFIG_PACKAGE_luci-app-udpxy is not set
+# CONFIG_PACKAGE_luci-app-uhttpd is not set
+# CONFIG_PACKAGE_luci-app-unblockneteasemusic is not set
+# CONFIG_PACKAGE_luci-app-unbound is not set
+# CONFIG_PACKAGE_luci-app-unishare is not set
+CONFIG_PACKAGE_luci-app-upnp=y
+# CONFIG_PACKAGE_luci-app-usb-printer is not set
+# CONFIG_PACKAGE_luci-app-usteer is not set
+# CONFIG_PACKAGE_luci-app-ustreamer is not set
+# CONFIG_PACKAGE_luci-app-v2raya is not set
+# CONFIG_PACKAGE_luci-app-vlmcsd is not set
+# CONFIG_PACKAGE_luci-app-vnstat2 is not set
+# CONFIG_PACKAGE_luci-app-vsftpd is not set
+# CONFIG_PACKAGE_luci-app-watchcat is not set
+# CONFIG_PACKAGE_luci-app-wechatpush is not set
+# CONFIG_PACKAGE_luci-app-wifihistory is not set
+# CONFIG_PACKAGE_luci-app-wifischedule is not set
+# CONFIG_PACKAGE_luci-app-wol is not set
+# CONFIG_PACKAGE_luci-app-xfrpc is not set
+# CONFIG_PACKAGE_luci-app-xinetd is not set
+# CONFIG_PACKAGE_luci-app-xlnetacc is not set
+# CONFIG_PACKAGE_luci-app-zerotier is not set
+# CONFIG_PACKAGE_luci-nginxer is not set
+# end of 3. Applications
 
-CONFIG_PACKAGE_smartdns=y
-CONFIG_PACKAGE_chinadns-ng=y
+#
+# 4. Themes
+#
+# CONFIG_PACKAGE_luci-theme-argon is not set
+# CONFIG_PACKAGE_luci-theme-atmaterial_new is not set
+CONFIG_PACKAGE_luci-theme-bootstrap=y
+# CONFIG_PACKAGE_luci-theme-design is not set
+# CONFIG_PACKAGE_luci-theme-footstrap is not set
+# CONFIG_PACKAGE_luci-theme-glass is not set
+# CONFIG_PACKAGE_luci-theme-ifit is not set
+# CONFIG_PACKAGE_luci-theme-istorenas is not set
+# CONFIG_PACKAGE_luci-theme-material is not set
+# CONFIG_PACKAGE_luci-theme-material3 is not set
+# CONFIG_PACKAGE_luci-theme-openwrt is not set
+# CONFIG_PACKAGE_luci-theme-openwrt-2020 is not set
+# CONFIG_PACKAGE_luci-theme-tomato is not set
+# end of 4. Themes
+CONFIG_PACKAGE_luci-app-homeproxy=y
+CONFIG_PACKAGE_luci-app-mini-diskmanager=y
+CONFIG_PACKAGE_luci-app-natmapt=y
+CONFIG_PACKAGE_luci-app-package-manager=y
+CONFIG_PACKAGE_luci-app-partexp=y
+CONFIG_PACKAGE_luci-app-rclone_INCLUDE_rclone-webui=y
+CONFIG_PACKAGE_luci-app-rclone_INCLUDE_rclone-ng=y
+CONFIG_PACKAGE_luci-app-samba4=y
+CONFIG_PACKAGE_luci-app-upnp=y
+CONFIG_PACKAGE_luci-app-wolultra=y
+
+# LuCI 主题
+CONFIG_PACKAGE_luci-theme-aurora=y
+
+# LuCI 协议
+CONFIG_PACKAGE_luci-proto-ipv6=y
+CONFIG_PACKAGE_luci-proto-ppp=y
+CONFIG_PACKAGE_luci-proto-relay=y
+
+# LuCI 库
+CONFIG_PACKAGE_luci-lib-base=y
+CONFIG_PACKAGE_luci-lib-ip=y
+CONFIG_PACKAGE_luci-lib-ipkg=y
+CONFIG_PACKAGE_luci-lib-jsonc=y
+CONFIG_PACKAGE_luci-lib-nixio=y
+CONFIG_PACKAGE_luci-lib-nixio_openssl=y
+CONFIG_PACKAGE_luci-lib-uqr=y
+
+# ==================== 中文语言包 ====================
+
+CONFIG_PACKAGE_luci-i18n-aurora-config-zh-cn=y
+CONFIG_PACKAGE_luci-i18n-autoreboot-zh-cn=y
+CONFIG_PACKAGE_luci-i18n-base-zh-cn=y
+CONFIG_PACKAGE_luci-i18n-firewall-zh-cn=y
+CONFIG_PACKAGE_luci-i18n-fullconenat-sonic-zh-cn=y
+CONFIG_PACKAGE_luci-i18n-gecoosac-zh-cn=y
+CONFIG_PACKAGE_luci-i18n-homeproxy-zh-cn=y
+CONFIG_PACKAGE_luci-i18n-mini-diskmanager-zh-cn=y
+CONFIG_PACKAGE_luci-i18n-natmapt-zh-cn=y
+CONFIG_PACKAGE_luci-i18n-package-manager-zh-cn=y
+CONFIG_PACKAGE_luci-i18n-partexp-zh-cn=y
+CONFIG_PACKAGE_luci-i18n-samba4-zh-cn=y
+CONFIG_PACKAGE_luci-i18n-upnp-zh-cn=y
+CONFIG_PACKAGE_luci-i18n-wolultra-zh-cn=y
+
+# ==================== 网络功能 ====================
+
+CONFIG_PACKAGE_curl=y
+CONFIG_PACKAGE_fullconenat-sonic=y
+CONFIG_PACKAGE_miniupnpd-nftables=y
+CONFIG_PACKAGE_nftables-json=y
+CONFIG_PACKAGE_avahi-dbus-daemon=y
+CONFIG_PACKAGE_knot-resolver_dnstap=y
+CONFIG_PACKAGE_wsdd2=y
+CONFIG_PACKAGE_ip-full=y
+CONFIG_PACKAGE_relayd=y
+CONFIG_PACKAGE_openssh-keygen=y
+CONFIG_PACKAGE_openssh-sftp-server=y
+CONFIG_PACKAGE_cgi-io=y
 CONFIG_PACKAGE_sing-box=y
-CONFIG_PACKAGE_shadowsocks-rust-sslocal=y
-CONFIG_PACKAGE_shadowsocksr-libev-ssr-local=y
-CONFIG_PACKAGE_shadowsocksr-libev-ssr-redir=y
-CONFIG_PACKAGE_v2ray-plugin=y
-CONFIG_PACKAGE_simple-obfs-client=y
-CONFIG_PACKAGE_haproxy=y
-CONFIG_PACKAGE_microsocks=y
-CONFIG_PACKAGE_geoview=y
-CONFIG_PACKAGE_v2ray-geoip=y
+CONFIG_PACKAGE_uhttpd=y
+CONFIG_PACKAGE_uhttpd-mod-ubus=y
+CONFIG_PACKAGE_hostapd-common=y
+CONFIG_PACKAGE_wpad-openssl=y
+CONFIG_PACKAGE_6rd=y
+CONFIG_PACKAGE_etherwake=y
+CONFIG_PACKAGE_ethtool=y
+CONFIG_PACKAGE_gecoosac=y
+CONFIG_PACKAGE_iperf3=y
+CONFIG_PACKAGE_iw=y
+CONFIG_PACKAGE_natmapt=y
+CONFIG_PACKAGE_stuntman-client=y
+CONFIG_PACKAGE_odhcp6c=y
+CONFIG_PACKAGE_odhcpd-ipv6only=y
+CONFIG_PACKAGE_ppp=y
+CONFIG_PACKAGE_ppp-mod-pppoe=y
+CONFIG_PACKAGE_proto-bonding=y
 
-# Samba / 局域网发现
 
-CONFIG_PACKAGE_samba4-server=y
+CONFIG_PACKAGE_coreutils-timeout=y
+
+
+# Samba4
 CONFIG_PACKAGE_samba4-libs=y
+CONFIG_PACKAGE_samba4-server=y
 CONFIG_SAMBA4_SERVER_WSDD2=y
 CONFIG_SAMBA4_SERVER_NETBIOS=y
 CONFIG_SAMBA4_SERVER_AVAHI=y
 CONFIG_SAMBA4_SERVER_VFS=y
-CONFIG_PACKAGE_avahi-dbus-daemon=y
-CONFIG_PACKAGE_wsdd2=y
 
-# 实用工具 / 性能测试 / 系统诊断
+CONFIG_PACKAGE_uclient-fetch=y
 
-CONFIG_PACKAGE_htop=y
-CONFIG_PACKAGE_iperf3=y
+# ==================== 磁盘 / 存储工具 ====================
+
+CONFIG_PACKAGE_uboot-envtools=y
+CONFIG_PACKAGE_unzip=y
+CONFIG_PACKAGE_xz-utils=y
+CONFIG_PACKAGE_blkid=y
+CONFIG_PACKAGE_cfdisk=y
+CONFIG_PACKAGE_cgdisk=y
+CONFIG_PACKAGE_fdisk=y
+CONFIG_PACKAGE_gdisk=y
+CONFIG_PACKAGE_lsblk=y
+CONFIG_PACKAGE_nvme-cli=y
+CONFIG_PACKAGE_parted=y
+CONFIG_PARTED_READLINE=y
+CONFIG_PACKAGE_sfdisk=y
+CONFIG_PACKAGE_sgdisk=y
+
+CONFIG_PACKAGE_attr=y
+CONFIG_PACKAGE_btrfs-progs=y
+CONFIG_PACKAGE_e2fsprogs=y
+CONFIG_PACKAGE_exfat-fsck=y
+CONFIG_PACKAGE_exfat-mkfs=y
+CONFIG_PACKAGE_f2fs-tools=y
+CONFIG_PACKAGE_f2fsck=y
+CONFIG_PACKAGE_mkf2fs=y
+CONFIG_PACKAGE_ntfs3-mount=y
+CONFIG_PACKAGE_resize2fs=y
+
+# ==================== 系统工具 ====================
+
+CONFIG_PACKAGE_bash=y
+CONFIG_PACKAGE_usbmuxd=y
+CONFIG_PACKAGE_bc=y
 CONFIG_PACKAGE_coremark=y
-CONFIG_PACKAGE_curl=y
+CONFIG_COREMARK_OPTIMIZE_O3=y
+CONFIG_COREMARK_ENABLE_MULTITHREADING=y
+CONFIG_PACKAGE_coreutils=y
+CONFIG_PACKAGE_coreutils-timeout=y
+CONFIG_PACKAGE_dbus=y
+CONFIG_PACKAGE_dmesg=y
+CONFIG_PACKAGE_flock=y
+CONFIG_PACKAGE_jshn=y
+CONFIG_PACKAGE_libjson-script=y
+CONFIG_PACKAGE_losetup=y
+CONFIG_PACKAGE_mmc-utils=y
+CONFIG_PACKAGE_nand-utils=y
 CONFIG_PACKAGE_openssl-util=y
+
+# ==================== 4G / 5G / Modem ====================
+
+CONFIG_LPAC_WITH_PCSC=y
+CONFIG_LPAC_WITH_AT=y
+CONFIG_LPAC_WITH_UQMI=y
+CONFIG_LPAC_WITH_MBIM=y
+
+CONFIG_PACKAGE_qmodem_INCLUDE_SEAL=y
+CONFIG_PACKAGE_qmodem_INCLUDE_ndisc6=y
+CONFIG_PACKAGE_qmodem_INCLUDE_vendor-qmi-wwan=y
+CONFIG_PACKAGE_qmodem_USE_TOM_CUSTOMIZED_QUECTEL_CM=y
+
+CONFIG_PACKAGE_shellsync=y
 CONFIG_PACKAGE_smartmontools=y
 CONFIG_PACKAGE_smartmontools-drivedb=y
-CONFIG_PACKAGE_coreutils=y
-CONFIG_PACKAGE_coreutils-base64=y
-CONFIG_PACKAGE_coreutils-nohup=y
-CONFIG_PACKAGE_coreutils-timeout=y
-CONFIG_PACKAGE_bc=y
-CONFIG_PACKAGE_dmesg=y
-CONFIG_PACKAGE_ttyd=y
-CONFIG_PACKAGE_miniupnpd-nftables=y
+CONFIG_STRACE_NONE=y
 
-# OpenSSL / TLS / 加密库
+# ==================== TAR ====================
 
-CONFIG_PACKAGE_libopenssl=y
-CONFIG_OPENSSL_OPTIMIZE_SPEED=y
-CONFIG_OPENSSL_WITH_ASM=y
-CONFIG_OPENSSL_WITH_TLS13=y
-CONFIG_OPENSSL_WITH_CHACHA_POLY1305=y
-CONFIG_OPENSSL_PREFER_CHACHA_OVER_GCM=y
-CONFIG_PACKAGE_libustream-openssl=y
-CONFIG_PACKAGE_libcurl=y
-CONFIG_LIBCURL_OPENSSL=y
+CONFIG_PACKAGE_TAR_POSIX_ACL=y
+CONFIG_PACKAGE_TAR_XATTR=y
+CONFIG_PACKAGE_TAR_BZIP2=y
+CONFIG_PACKAGE_TAR_GZIP=y
+CONFIG_PACKAGE_TAR_XZ=y
+CONFIG_PACKAGE_TAR_ZSTD=y
+
+# ==================== Modem / UBI / USB 工具 ====================
+
+CONFIG_PACKAGE_tom_modem_EARLY_RETURN=y
+CONFIG_PACKAGE_tom_modem_ENABLE_UBUS_DAEMON=y
+CONFIG_PACKAGE_ubi-utils=y
+CONFIG_PACKAGE_usb-modeswitch=y
+CONFIG_PACKAGE_usbids=y
+CONFIG_PACKAGE_usbutils=y
+
+# ==================== 删除插件 ====================
+
+# CONFIG_PACKAGE_luci-app-attendedsysupgrade is not set
+# CONFIG_PACKAGE_luci-app-wol is not set
+
+# ==================== 禁用 Video 软件源 ====================
+
+# CONFIG_FEED_video is not set
+
+# ==================== 不生成 INITRAMFS 固件 ====================
+
+# CONFIG_TARGET_ROOTFS_INITRAMFS is not set
