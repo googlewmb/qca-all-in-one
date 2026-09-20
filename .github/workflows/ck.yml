@@ -7,7 +7,7 @@ permissions:
 on:
   workflow_dispatch:
   schedule:
-    - cron: "58 18 * * *" # 每天北京时间 02:58
+    - cron: "58 6,18 * * *" # 每12小时检测一次，北京时间 02:58、14:58
 
 jobs:
   source-check:
@@ -339,8 +339,11 @@ jobs:
                   ) as f:
                       f.write(new_commit)
 
+                  # 首次检测也加入更新列表
+                  updated.append(source_key)
+
                   print("已记录当前 Commit")
-                  print("首次检测不触发编译")
+                  print("首次检测触发编译")
 
                   continue
 
