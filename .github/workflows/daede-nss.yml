@@ -1,4 +1,4 @@
-name: Openwrt_daede-nss
+name: Openwrt_ipq-nss
 
 permissions: write-all
 
@@ -13,7 +13,6 @@ env:
   REPO_URL: https://github.com/LiBwrt/LibWrt
   REPO_BRANCH: 25.12-nss
   CONFIG_FILE: nss/immortalwrt/.config
-  CONFIG_BUILD: nss/immortalwrt/${{ matrix.config }}.txt
   DIY_P1_SH: nss/diy-part1.sh
   DIY_P2_SH: nss/diy-part2.sh
   UPLOAD_BIN: true
@@ -28,6 +27,9 @@ jobs:
         config:
           - ipq60x
           - ipq807x
+
+    env:
+      CONFIG_BUILD: nss/immortalwrt/${{ matrix.config }}.txt
 
     runs-on: ubuntu-latest
 
