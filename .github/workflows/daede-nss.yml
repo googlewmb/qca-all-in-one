@@ -1,0 +1,259 @@
+name: Openwrt_daede-nss
+
+permissions: write-all
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "16 16 * * *"
+
+env:
+  OPENWRT_NAME: Openwrt
+  REPO: googlewmb/qca-all-in-one
+  REPO_URL: https://github.com/LiBwrt/LibWrt
+  REPO_BRANCH: 25.12-nss
+  CONFIG_FILE: nss/immortalwrt/.config
+  CONFIG_BUILD: nss/immortalwrt/ipq60x.txt
+  DIY_P1_SH: nss/diy-part1.sh
+  DIY_P2_SH: nss/diy-part2.sh
+  UPLOAD_BIN: true
+  UPLOAD_FIRMWARE: true
+  UPLOAD_RELEASE: true
+  TZ: Asia/Shanghai
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 释放Ubuntu磁盘空间
+      uses: coder-xiaomo/free-disk-space@main
+      with:
+        tool-cache: false
+        android: true
+        dotnet: true
+        haskell: true
+        large-packages: true
+        docker-images: true
+        swap-storage: true
+
+    - name: 加载项目文件
+      uses: actions/checkout@main
+
+    - name: 初始化编译环境
+      env:
+        DEBIAN_FRONTEND: noninteractive
+      run: |
+        sudo apt-get update
+        sudo apt-get full-upgrade -y
+        sudo apt-get install -y ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential \
+        bzip2 ccache clang cmake cpio curl device-tree-compiler ecj fastjar flex gawk gettext gcc-multilib \
+        g++-multilib git gnutls-dev gperf haveged help2man intltool lib32gcc-s1 libc6-dev-i386 libelf-dev \
+        libglib2.0-dev libgmp3-dev libltdl-dev libmpc-dev libmpfr-dev libncurses-dev libpython3-dev \
+        libreadline-dev libssl-dev libtool libyaml-dev libz-dev lld llvm lrzsz mkisofs msmtp nano \
+        ninja-build p7zip p7zip-full patch pkgconf python3 python3-pip python3-ply python3-docutils \
+        python3-pyelftools qemu-utils re2c rsync scons squashfs-tools subversion swig texinfo uglifyjs \
+        upx-ucl unzip vim wget xmlto xxd zlib1g-dev zstd
+
+    - name: 设置当前的日期
+      run: |
+        sudo timedatectl set-timezone "$TZ"
+        echo "date1=$(date +'%Y.%m.%d-%H.%M')" >> $GITHUB_ENV
+        echo "date2=$(date +'%Y.%m.%d')" >> $GITHUB_ENV
+        echo "date3=$(date "+%Y年%m月%d日")" >> $GITHUB_ENV
+
+    - name: 下载固件源码
+      run: |
+        git clone ${{ env.REPO_URL }} -b ${{ env.REPO_BRANCH }} openwrt
+
+    - name: 执行DIY_P1_SH
+      run: |
+        chmod +x ${{ env.DIY_P1_SH }}
+        cd openwrt
+        $GITHUB_WORKSPACE/${{ env.DIY_P1_SH }}
+
+    - name: 更新feeds
+      working-directory: ./openwrt
+      run: |
+        ./scripts/feeds update -a
+        ./scripts/feeds install -a
+
+    - name: 加载config 执行DIY_P2_SH defconfig
+      run: |
+        [ -e ${{ env.CONFIG_BUILD}} ] && mv ${{ env.CONFIG_BUILD}} openwrt/.config
+        chmod +x ${{ env.DIY_P2_SH }}
+        cd openwrt
+        $GITHUB_WORKSPACE/${{ env.DIY_P2_SH }}
+        make defconfig
+
+    - name: 修复首次启动无线默认开启
+      working-directory: ./openwrt
+      run: |
+        # LibWrt 25.12-nss 已默认开启无线；修复 DIY2 生成的首次启动脚本。
+        # 必须在 DIY2 之后执行，避免被旧脚本覆盖。
+        mkdir -p files/etc/uci-defaults
+        cat > files/etc/uci-defaults/zz-enable-wifi <<'EOF'
+        #!/bin/sh
+        . /lib/functions.sh
+
+        count_radio() { radios=$((radios + 1)); }
+        count_iface() { ifaces=$((ifaces + 1)); }
+        enable_wifi() {
+            uci -q set "wireless.$1.disabled=0" || failed=1
+        }
+
+        # 驱动可能尚未就绪；文件非空也不代表已生成无线设备配置。
+        # wifi config 只补充未配置的设备，保留已有 SSID、密码等设置。
+        attempt=0
+        while [ "$attempt" -lt 15 ]; do
+            if /sbin/wifi config; then
+                radios=0
+                ifaces=0
+                if config_load wireless; then
+                    config_foreach count_radio wifi-device
+                    config_foreach count_iface wifi-iface
+                    if [ "$radios" -gt 0 ] && [ "$ifaces" -gt 0 ]; then
+                        failed=0
+                        config_foreach enable_wifi wifi-device
+                        config_foreach enable_wifi wifi-iface
+                        [ "$failed" -eq 0 ] || exit 1
+                        uci -q commit wireless || exit 1
+                        # 该分支的 999_auto-restart.sh 已先启动 network。
+                        # commit 只保存配置，需让运行中的 netifd 重新加载。
+                        if ubus -t 5 call network get_proto_handlers >/dev/null 2>&1; then
+                            /sbin/wifi reload || exit 1
+                        fi
+                        exit 0
+                    fi
+                fi
+            fi
+            attempt=$((attempt + 1))
+            [ "$attempt" -ge 15 ] || sleep 2
+        done
+
+        logger -t wifi-defaults "Wireless configuration not ready; retry on next boot"
+        # 非零退出保留本脚本，下次启动继续尝试。
+        exit 1
+        EOF
+        chmod 0755 files/etc/uci-defaults/zz-enable-wifi
+
+    - name: 下载安装包
+      working-directory: ./openwrt
+      run: |
+        make download -j$(nproc)
+        find dl -size -1024c -exec ls -l {} \;
+        find dl -size -1024c -exec rm -f {} \;
+
+    - name: 编译固件
+      id: compile
+      working-directory: ./openwrt
+      run: |
+        echo -e "$(nproc) thread compile"
+        make -j$(nproc) || make -j1 || make -j1 V=s
+
+    - name: 获取固件设备名字
+      working-directory: ./openwrt
+      run: |
+        DEVICE_NAME=$(grep '^CONFIG_TARGET_.*_DEVICE_.*=y' .config | sed -r 's/^CONFIG_TARGET_(.*)_DEVICE_(.*)=y/\1_\2/' | head -n 1)
+        if [ -n "$DEVICE_NAME" ]; then
+          echo "DEVICE_NAME=$DEVICE_NAME" >> "$GITHUB_ENV"
+        fi
+
+    - name: 上传bin目录文件
+      if: steps.compile.outcome == 'success' && env.UPLOAD_BIN == 'true'
+      uses: actions/upload-artifact@main
+      with:
+        name: bin_${{ env.OPENWRT_NAME }}_${{ env.DEVICE_NAME }}_${{ env.date1 }}
+        path: openwrt/bin
+
+    - name: 整理文件到firmware目录
+      id: organize
+      if: steps.compile.outcome == 'success'
+      run: |
+        mkdir firmware
+        cp -v ./openwrt/.config ./firmware/${{ env.date1 }}_${{ env.OPENWRT_NAME }}_${{ env.DEVICE_NAME }}.config
+
+        find openwrt/bin/targets/*/*/ -maxdepth 1 -type f \
+        \( -name "config.buildinfo" -o \
+           -name "*.bin" -o \
+           -name "*.img" -o \
+           -name "*.itb" -o \
+           -name "*.ubi" -o \
+           -name "*.trx" -o \
+           -name "*.tar" \
+        \) \
+        -exec cp -v {} ./firmware/ \;
+
+        cd firmware
+
+        sudo apt-get install -y rename
+
+        if [ -f config.buildinfo ]; then
+          mv config.buildinfo \
+          "${{ env.date1 }}_${{ env.OPENWRT_NAME }}_${{ env.DEVICE_NAME }}_config.buildinfo"
+        fi
+
+        for file in *.bin *.img *.itb *.ubi *.trx *.tar; do
+          [ -f "$file" ] || continue
+          mv "$file" \
+          "${{ env.date1 }}_${{ env.OPENWRT_NAME }}_${{ env.DEVICE_NAME }}_$file"
+        done
+
+        echo "FIRMWARE=$PWD" >> $GITHUB_ENV
+
+    - name: 上传firmware目录文件
+      if: steps.organize.outcome == 'success' && env.UPLOAD_FIRMWARE == 'true'
+      uses: actions/upload-artifact@main
+      with:
+        name: firmware_${{ env.OPENWRT_NAME }}_${{ env.DEVICE_NAME }}_${{ env.date1 }}
+        path: ${{ env.FIRMWARE }}
+
+    - name: 生成release描述
+      id: release
+      if: steps.organize.outcome == 'success' && env.UPLOAD_RELEASE == 'true'
+      run: |
+        touch release.txt
+        echo "由衷感谢所有为openwrt无私奉献的大佬们" >> release.txt
+        echo "📥 固件下载" >> release.txt
+
+    - name: 发布至release
+      if: steps.release.outcome == 'success'
+      uses: softprops/action-gh-release@master
+      with:
+        files: ${{ env.FIRMWARE }}/*
+        name: ${{ env.date3 }}
+        tag_name: ${{ env.date2 }}
+        body_path: release.txt
+
+    - name: config文件上传自动更新1
+      run: |
+        git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git config --global user.name "github-actions[bot]"
+
+    - name: config文件上传自动更新2
+      run: |
+        cd $GITHUB_WORKSPACE
+        git clone -b main https://github.com/${{ env.REPO }}.git main
+
+    - name: config文件上传自动更新3
+      run: |
+        cp ./openwrt/.config $GITHUB_WORKSPACE/main/${{ env.CONFIG_FILE }}
+        cd $GITHUB_WORKSPACE/main
+        git add .
+        if git diff --cached --quiet; then
+          echo "nothing to commit"
+        else
+          git commit -am "update $(date '+%Y-%m-%d %H:%M:%S')"
+          git push --quiet "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ env.REPO }}.git" HEAD:main
+        fi
+
+    - name: 查看磁盘使用情况
+      if: (!cancelled())
+      run: df -hT
+
+    - name: 删除工作流
+      uses: Mattraks/delete-workflow-runs@main
+      with:
+        delete_workflow_pattern: ${{ github.workflow }}
+        retain_days: 7
+        keep_minimum_runs: 0
