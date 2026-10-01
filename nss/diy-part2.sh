@@ -263,7 +263,7 @@ if [ -f .config ]; then
     CONFIG_PACKAGES="$(
         sed -nE \
             's/^CONFIG_PACKAGE_([A-Za-z0-9_.+@:-]+)=(y|m)$/\1/p' \
-            .config |
+        .config |
         sort -u
     )"
 
@@ -517,21 +517,36 @@ cat > files/etc/uci-defaults/zz-enable-wifi <<'EOF'
 
 . /lib/functions.sh
 
-[ -s /etc/config/wireless ] || wifi config
+###############################################################################
+# Wi-Fi 配置不存在时，先由系统自动生成
+###############################################################################
+
+if [ ! -s /etc/config/wireless ]; then
+    /sbin/wifi config 2>/dev/null || true
+fi
+
+###############################################################################
+# 强制开启所有 Wi-Fi Device
+###############################################################################
 
 if [ -s /etc/config/wireless ]; then
 
     config_load wireless
 
-    enable_wifi()
+    enable_wifi_device()
     {
         local cfg="$1"
-
         uci -q set "wireless.${cfg}.disabled=0"
     }
 
-    config_foreach enable_wifi wifi-device
-    config_foreach enable_wifi wifi-iface
+    enable_wifi_iface()
+    {
+        local cfg="$1"
+        uci -q set "wireless.${cfg}.disabled=0"
+    }
+
+    config_foreach enable_wifi_device wifi-device
+    config_foreach enable_wifi_iface wifi-iface
 
     uci -q commit wireless
 
