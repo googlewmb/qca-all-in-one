@@ -118,7 +118,7 @@ is_enabled()
     local pkg="$1"
 
     grep -Eq \
-        "^CONFIG_PACKAGE_${pkg}=(y|m)$" \
+        "^CONFIG_PACKAGE_${pkg}=(y|m)" \
         .config 2>/dev/null
 }
 
@@ -220,7 +220,7 @@ if [ -d package/myapp ]; then
         [ -n "$pkg" ] || continue
 
         case "$pkg" in
-            '$('*|*'$)'|*'/'*)
+            '\( ('*|*' \))'|*'/'*)
                 continue
                 ;;
         esac
@@ -263,7 +263,7 @@ if [ -f .config ]; then
     CONFIG_PACKAGES="$(
         sed -nE \
             's/^CONFIG_PACKAGE_([A-Za-z0-9_.+@:-]+)=(y|m)$/\1/p' \
-        .config |
+            .config |
         sort -u
     )"
 
@@ -502,7 +502,7 @@ echo "nf_conntrack_max = 655550"
 
 
 ###############################################################################
-# 12. Wi-Fi 首次启动自动开启
+# 12. Wi-Fi 首次启动自动开启（更稳健）
 ###############################################################################
 
 echo
@@ -517,47 +517,42 @@ cat > files/etc/uci-defaults/zz-enable-wifi <<'EOF'
 
 . /lib/functions.sh
 
-###############################################################################
-# Wi-Fi 配置不存在时，先由系统自动生成
-###############################################################################
+# 等待无线配置真正出现（最多约 30 秒，适配 ath11k / IPQ 晚加载）
+i=0
+while [ $i -lt 30 ]; do
+    [ -s /etc/config/wireless ] && break
+    sleep 1
+    i=$((i + 1))
+done
 
-if [ ! -s /etc/config/wireless ]; then
-    /sbin/wifi config 2>/dev/null || true
-fi
+# 仍不存在则强制生成一次
+[ -s /etc/config/wireless ] || wifi config 2>/dev/null || true
 
-###############################################################################
-# 强制开启所有 Wi-Fi Device
-###############################################################################
+[ -s /etc/config/wireless ] || exit 0
 
-if [ -s /etc/config/wireless ]; then
+config_load wireless
 
-    config_load wireless
+enable_all()
+{
+    local cfg="$1"
+    uci -q set "wireless.${cfg}.disabled=0"
+}
 
-    enable_wifi_device()
-    {
-        local cfg="$1"
-        uci -q set "wireless.${cfg}.disabled=0"
-    }
+# 同时处理 wifi-device 和 wifi-iface（兼容新旧 wifi-scripts）
+config_foreach enable_all wifi-device
+config_foreach enable_all wifi-iface
 
-    enable_wifi_iface()
-    {
-        local cfg="$1"
-        uci -q set "wireless.${cfg}.disabled=0"
-    }
+uci -q commit wireless
 
-    config_foreach enable_wifi_device wifi-device
-    config_foreach enable_wifi_iface wifi-iface
-
-    uci -q commit wireless
-
-fi
+# 真正拉起无线
+wifi up 2>/dev/null || wifi 2>/dev/null || true
 
 exit 0
 EOF
 
 chmod +x files/etc/uci-defaults/zz-enable-wifi
 
-echo "Wi-Fi 首次启动自动开启已设置"
+echo "Wi-Fi 首次启动自动开启已设置（带等待 + wifi up）"
 
 
 ###############################################################################
