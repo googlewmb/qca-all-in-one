@@ -1,6 +1,6 @@
 #
 # ImmortalWrt 配置文件
-# 平台：Qualcomm IPQ807x
+# 平台：Qualcomm NSS
 # 内核：Linux 6.x
 # 多设备配置
 #
@@ -13,12 +13,11 @@ CONFIG_TARGET_qualcommax_ipq807x=y
 CONFIG_TARGET_MULTI_PROFILE=y
 CONFIG_TARGET_PER_DEVICE_ROOTFS=y
 
-
-# daed内核
+# ==================== daed 内核 ====================
 
 CONFIG_DEVEL=y
+# CONFIG_KERNEL_DEBUG_INFO_REDUCED is not set
 CONFIG_KERNEL_DEBUG_INFO=y
-CONFIG_KERNEL_DEBUG_INFO_REDUCED=n
 CONFIG_KERNEL_DEBUG_INFO_BTF=y
 CONFIG_KERNEL_CGROUPS=y
 CONFIG_KERNEL_CGROUP_BPF=y
@@ -27,13 +26,7 @@ CONFIG_BPF_TOOLCHAIN_HOST=y
 CONFIG_KERNEL_XDP_SOCKETS=y
 CONFIG_PACKAGE_kmod-xdp-sockets-diag=y
 CONFIG_PACKAGE_kmod-sched-bpf=y
-
-
-
-
 CONFIG_PACKAGE_kmod-tcp-bbr=y
-#
-
 
 # ==================== 设备型号 ====================
 
@@ -64,20 +57,16 @@ CONFIG_IPV6=y
 
 # ==================== 开发与编译 ====================
 
-CONFIG_DEVEL=y
 CONFIG_AUTOREBUILD=y
 CONFIG_CCACHE=y
 CONFIG_MOLD=y
 CONFIG_GDB=y
-
 CONFIG_BPF_TOOLCHAIN_BUILD_LLVM=y
 CONFIG_NEED_TOOLCHAIN=y
 CONFIG_HAS_BPF_TOOLCHAIN=y
-
 CONFIG_USE_MUSL=y
 CONFIG_MUSL_DISABLE_CRYPT_SIZE_HACK=y
 CONFIG_SSP_SUPPORT=y
-
 CONFIG_GCC_USE_DEFAULT_VERSION=y
 
 # ==================== 系统启动 ====================
@@ -92,6 +81,7 @@ CONFIG_FEED_packages=y
 CONFIG_FEED_luci=y
 CONFIG_FEED_routing=y
 CONFIG_FEED_telephony=y
+# CONFIG_FEED_video is not set
 
 # ==================== 编译安全优化 ====================
 
@@ -644,6 +634,7 @@ CONFIG_PACKAGE_libcomerr=y
 CONFIG_PACKAGE_libcurl=y
 
 # CURL 功能
+
 CONFIG_LIBCURL_OPENSSL=y
 CONFIG_LIBCURL_FILE=y
 CONFIG_LIBCURL_FTP=y
@@ -660,6 +651,7 @@ CONFIG_LIBCURL_UNIX_SOCKETS=y
 CONFIG_LIBCURL_HTTP_AUTH=y
 
 # 其他基础库
+
 CONFIG_PACKAGE_libdaemon=y
 CONFIG_PACKAGE_libdbus=y
 CONFIG_PACKAGE_libe2p=y
@@ -730,11 +722,13 @@ CONFIG_PACKAGE_luci-mod-network=y
 CONFIG_PACKAGE_luci-mod-status=y
 CONFIG_PACKAGE_luci-mod-system=y
 
-# LuCI 插件
-CONFIG_PACKAGE_luci-app-aurora-config=n
+# ==================== LuCI 插件 ====================
+
+# CONFIG_PACKAGE_luci-app-aurora-config is not set
 CONFIG_PACKAGE_luci-app-autoreboot=y
 CONFIG_PACKAGE_luci-app-firewall=y
 CONFIG_PACKAGE_luci-app-fullconenat-sonic=y
+
 # CONFIG_PACKAGE_luci-app-3cat is not set
 # CONFIG_PACKAGE_luci-app-3ginfo-lite is not set
 # CONFIG_PACKAGE_luci-app-acl is not set
@@ -757,7 +751,6 @@ CONFIG_PACKAGE_luci-app-fullconenat-sonic=y
 # CONFIG_PACKAGE_luci-app-arpbind is not set
 # CONFIG_PACKAGE_luci-app-athena-led is not set
 # CONFIG_PACKAGE_luci-app-attendedsysupgrade is not set
-CONFIG_PACKAGE_luci-app-autoreboot=y
 # CONFIG_PACKAGE_luci-app-babeld is not set
 # CONFIG_PACKAGE_luci-app-baidudrive is not set
 # CONFIG_PACKAGE_luci-app-banip is not set
@@ -803,16 +796,14 @@ CONFIG_PACKAGE_luci-app-daede_daed=y
 # CONFIG_PACKAGE_luci-app-filebrowser is not set
 # CONFIG_PACKAGE_luci-app-filebrowser-go is not set
 # CONFIG_PACKAGE_luci-app-filemanager is not set
-CONFIG_PACKAGE_luci-app-firewall=y
 # CONFIG_PACKAGE_luci-app-floatip is not set
 # CONFIG_PACKAGE_luci-app-frpc is not set
 # CONFIG_PACKAGE_luci-app-frps is not set
-CONFIG_PACKAGE_luci-app-fullconenat-sonic=y
 # CONFIG_PACKAGE_luci-app-fwknopd is not set
 # CONFIG_PACKAGE_luci-app-gost is not set
 # CONFIG_PACKAGE_luci-app-guest-wifi is not set
 # CONFIG_PACKAGE_luci-app-hd-idle is not set
-CONFIG_PACKAGE_luci-app-homeproxy=n
+# CONFIG_PACKAGE_luci-app-homeproxy is not set
 # CONFIG_PACKAGE_luci-app-honk is not set
 # CONFIG_PACKAGE_luci-app-https-dns-proxy is not set
 # CONFIG_PACKAGE_luci-app-ipsec-vpnd is not set
@@ -836,7 +827,7 @@ CONFIG_PACKAGE_luci-app-homeproxy=n
 # CONFIG_PACKAGE_luci-app-minidlna is not set
 # CONFIG_PACKAGE_luci-app-modemband is not set
 # CONFIG_PACKAGE_luci-app-momo is not set
-CONFIG_PACKAGE_luci-app-mosdns=n
+# CONFIG_PACKAGE_luci-app-mosdns is not set
 # CONFIG_PACKAGE_luci-app-mosquitto is not set
 # CONFIG_PACKAGE_luci-app-msd_lite is not set
 # CONFIG_PACKAGE_luci-app-music-remote-center is not set
@@ -876,11 +867,12 @@ CONFIG_PACKAGE_luci-app-natmapt=y
 CONFIG_PACKAGE_luci-app-package-manager=y
 # CONFIG_PACKAGE_luci-app-pagekitec is not set
 CONFIG_PACKAGE_luci-app-partexp=y
-CONFIG_PACKAGE_luci-app-passwall=n
+# CONFIG_PACKAGE_luci-app-passwall is not set
 
 #
 # Configuration
 #
+
 # CONFIG_PACKAGE_luci-app-passwall_Iptables_Transparent_Proxy is not set
 CONFIG_PACKAGE_luci-app-passwall_Nftables_Transparent_Proxy=y
 CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Geoview=y
@@ -898,6 +890,7 @@ CONFIG_PACKAGE_luci-app-passwall_INCLUDE_SingBox=y
 CONFIG_PACKAGE_luci-app-passwall_INCLUDE_V2ray_Plugin=y
 # CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Xray is not set
 # CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Xray_Plugin is not set
+
 # end of Configuration
 
 # CONFIG_PACKAGE_luci-app-passwall2 is not set
@@ -913,8 +906,6 @@ CONFIG_PACKAGE_luci-app-passwall_INCLUDE_V2ray_Plugin=y
 # CONFIG_PACKAGE_luci-app-radicale3 is not set
 # CONFIG_PACKAGE_luci-app-ramfree is not set
 # CONFIG_PACKAGE_luci-app-rclone is not set
-CONFIG_PACKAGE_luci-app-rclone_INCLUDE_rclone-webui=y
-CONFIG_PACKAGE_luci-app-rclone_INCLUDE_rclone-ng=y
 # CONFIG_PACKAGE_luci-app-rp-pppoe-server is not set
 # CONFIG_PACKAGE_luci-app-rtp2httpd is not set
 # CONFIG_PACKAGE_luci-app-rustdesk-server is not set
@@ -989,11 +980,9 @@ CONFIG_PACKAGE_luci-app-upnp=y
 # CONFIG_PACKAGE_luci-app-xlnetacc is not set
 # CONFIG_PACKAGE_luci-app-zerotier is not set
 # CONFIG_PACKAGE_luci-nginxer is not set
-# end of 3. Applications
 
-#
-# 4. Themes
-#
+# ==================== Themes ====================
+
 # CONFIG_PACKAGE_luci-theme-argon is not set
 # CONFIG_PACKAGE_luci-theme-atmaterial_new is not set
 CONFIG_PACKAGE_luci-theme-bootstrap=y
@@ -1007,26 +996,20 @@ CONFIG_PACKAGE_luci-theme-bootstrap=y
 # CONFIG_PACKAGE_luci-theme-openwrt is not set
 # CONFIG_PACKAGE_luci-theme-openwrt-2020 is not set
 # CONFIG_PACKAGE_luci-theme-tomato is not set
-# end of 4. Themes
-CONFIG_PACKAGE_luci-app-homeproxy=n
+
+# ==================== 其他 LuCI ====================
+
 CONFIG_PACKAGE_luci-app-mini-diskmanager=y
-CONFIG_PACKAGE_luci-app-natmapt=y
-CONFIG_PACKAGE_luci-app-package-manager=y
-CONFIG_PACKAGE_luci-app-partexp=y
-CONFIG_PACKAGE_luci-app-rclone_INCLUDE_rclone-webui=n
-CONFIG_PACKAGE_luci-app-rclone_INCLUDE_rclone-ng=n
-CONFIG_PACKAGE_luci-app-samba4=y
-CONFIG_PACKAGE_luci-app-upnp=y
 CONFIG_PACKAGE_luci-app-wolultra=y
 
+# ==================== LuCI 协议 ====================
 
-
-# LuCI 协议
 CONFIG_PACKAGE_luci-proto-ipv6=y
 CONFIG_PACKAGE_luci-proto-ppp=y
 CONFIG_PACKAGE_luci-proto-relay=y
 
-# LuCI 库
+# ==================== LuCI 库 ====================
+
 CONFIG_PACKAGE_luci-lib-base=y
 CONFIG_PACKAGE_luci-lib-ip=y
 CONFIG_PACKAGE_luci-lib-ipkg=y
@@ -1037,20 +1020,20 @@ CONFIG_PACKAGE_luci-lib-uqr=y
 
 # ==================== 中文语言包 ====================
 
-CONFIG_PACKAGE_luci-i18n-aurora-config-zh-cn=n
+# CONFIG_PACKAGE_luci-i18n-aurora-config-zh-cn is not set
 CONFIG_PACKAGE_luci-i18n-autoreboot-zh-cn=y
 CONFIG_PACKAGE_luci-i18n-base-zh-cn=y
 CONFIG_PACKAGE_luci-i18n-firewall-zh-cn=y
 CONFIG_PACKAGE_luci-i18n-fullconenat-sonic-zh-cn=y
-CONFIG_PACKAGE_luci-i18n-gecoosac-zh-cn=n
-CONFIG_PACKAGE_luci-i18n-homeproxy-zh-cn=n
+# CONFIG_PACKAGE_luci-i18n-gecoosac-zh-cn is not set
+# CONFIG_PACKAGE_luci-i18n-homeproxy-zh-cn is not set
 CONFIG_PACKAGE_luci-i18n-mini-diskmanager-zh-cn=y
 CONFIG_PACKAGE_luci-i18n-natmapt-zh-cn=y
 CONFIG_PACKAGE_luci-i18n-package-manager-zh-cn=y
 CONFIG_PACKAGE_luci-i18n-partexp-zh-cn=y
 CONFIG_PACKAGE_luci-i18n-samba4-zh-cn=y
 CONFIG_PACKAGE_luci-i18n-upnp-zh-cn=y
-CONFIG_PACKAGE_luci-i18n-wolultra-zh-cn=n
+# CONFIG_PACKAGE_luci-i18n-wolultra-zh-cn is not set
 
 # ==================== 网络功能 ====================
 
@@ -1084,12 +1067,10 @@ CONFIG_PACKAGE_odhcpd-ipv6only=y
 CONFIG_PACKAGE_ppp=y
 CONFIG_PACKAGE_ppp-mod-pppoe=y
 CONFIG_PACKAGE_proto-bonding=y
-
-
 CONFIG_PACKAGE_coreutils-timeout=y
 
+# ==================== Samba4 ====================
 
-# Samba4
 CONFIG_PACKAGE_samba4-libs=y
 CONFIG_PACKAGE_samba4-server=y
 CONFIG_SAMBA4_SERVER_WSDD2=y
@@ -1136,7 +1117,6 @@ CONFIG_PACKAGE_coremark=y
 CONFIG_COREMARK_OPTIMIZE_O3=y
 CONFIG_COREMARK_ENABLE_MULTITHREADING=y
 CONFIG_PACKAGE_coreutils=y
-CONFIG_PACKAGE_coreutils-timeout=y
 CONFIG_PACKAGE_dbus=y
 CONFIG_PACKAGE_dmesg=y
 CONFIG_PACKAGE_flock=y
@@ -1182,15 +1162,6 @@ CONFIG_PACKAGE_usb-modeswitch=y
 CONFIG_PACKAGE_usbids=y
 CONFIG_PACKAGE_usbutils=y
 
-# ==================== 删除插件 ====================
-
-# CONFIG_PACKAGE_luci-app-attendedsysupgrade is not set
-# CONFIG_PACKAGE_luci-app-wol is not set
-
-# ==================== 禁用 Video 软件源 ====================
-
-# CONFIG_FEED_video is not set
-
-# ==================== 不生成 INITRAMFS 固件 ====================
+# ==================== 固件选项 ====================
 
 # CONFIG_TARGET_ROOTFS_INITRAMFS is not set
