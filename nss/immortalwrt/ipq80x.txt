@@ -757,7 +757,10 @@ CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Mihomo=y
 CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_ShadowsocksR_Libev_Client=y
 CONFIG_PACKAGE_luci-app-ttyd=y
 CONFIG_PACKAGE_luci-app-upnp=y
+
 CONFIG_PACKAGE_luci-app-daede=y
+CONFIG_PACKAGE_luci-app-daed=y
+
 # ==================== LuCI 插件 / =n ====================
 
 # 无 `=n` 的 luci-app 项目
@@ -805,7 +808,7 @@ CONFIG_PACKAGE_luci-app-daede=y
 # CONFIG_PACKAGE_luci-app-cpulimit is not set
 # CONFIG_PACKAGE_luci-app-crowdsec-firewall-bouncer is not set
 # CONFIG_PACKAGE_luci-app-csshnpd is not set
-# CONFIG_PACKAGE_luci-app-daede_dae is not set
+# CONFIG_PACKAGE_luci-app-daede_dae
 # CONFIG_PACKAGE_luci-app-dawn is not set
 # CONFIG_PACKAGE_luci-app-ddns is not set
 # CONFIG_PACKAGE_luci-app-ddns-go is not set
