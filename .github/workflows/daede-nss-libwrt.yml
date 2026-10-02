@@ -33,7 +33,7 @@ jobs:
       matrix:
         config:
           - ipq60x.txt
-          - ipq807x.txt
+          - ipq80x.txt
 
     env:
       CONFIG_BUILD: nss/immortalwrt/${{ matrix.config }}.txt
