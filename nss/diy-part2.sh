@@ -20,7 +20,7 @@ echo "第三方插件 / 依赖 / 来源优先"
 # 0. 基础目录
 ###############################################################################
 
-[ -n "$TOPDIR" ] || TOPDIR="$(pwd)"
+[ -d "$TOPDIR" ] || TOPDIR="$(pwd)"
 cd "$TOPDIR"
 
 echo "TOPDIR: $TOPDIR"
@@ -220,7 +220,7 @@ if [ -d package/myapp ]; then
         [ -n "$pkg" ] || continue
 
         case "$pkg" in
-            \(*|\)*|*'/'*)
+            '\( ('*|*' \))'|*'/'*)
                 continue
                 ;;
         esac
@@ -556,39 +556,7 @@ echo "Wi-Fi 首次启动自动开启已设置（带等待 + wifi up）"
 
 
 ###############################################################################
-# 13. 完美修复 hostapd MU-EDCA 补丁（解决 he_mu_edca 编译错误）
-###############################################################################
-
-echo
-echo "========================================"
-echo "修复 hostapd MU-EDCA 补丁编译问题"
-echo "========================================"
-
-# 给 hostapd_fill_csa_settings 中的 he_mu_edca 访问加上条件编译保护
-HOSTAPD_C=$(find package/network/services/hostapd -name "hostapd.c" 2>/dev/null | head -1)
-
-if [ -n "$HOSTAPD_C" ] && [ -f "$HOSTAPD_C" ]; then
-    # 防止重复添加
-    if ! grep -q "he_mu_edca.he_qos_info &= 0xfff0" "$HOSTAPD_C" || \
-       ! grep -B5 "he_mu_edca.he_qos_info &= 0xfff0" "$HOSTAPD_C" | grep -q "CONFIG_IEEE80211AX"; then
-
-        sed -i '/hapd->iface->conf->he_mu_edca.he_qos_info &= 0xfff0;/i\
-#ifdef CONFIG_IEEE80211AX' "$HOSTAPD_C"
-
-        sed -i '/hapd->iface->conf->he_mu_edca.he_qos_info &= 0xfff0;/a\
-#endif' "$HOSTAPD_C"
-
-        echo ">>> 已给 he_mu_edca 访问添加 CONFIG_IEEE80211AX 保护"
-    else
-        echo ">>> 已经添加过保护，跳过"
-    fi
-else
-    echo ">>> 未找到 hostapd.c（可能补丁还没应用），跳过"
-fi
-
-
-###############################################################################
-# 14. 最终来源检查
+# 13. 最终来源检查
 ###############################################################################
 
 echo
@@ -640,7 +608,7 @@ done
 
 
 ###############################################################################
-# 15. DIY2 完成
+# 14. DIY2 完成
 ###############################################################################
 
 echo
