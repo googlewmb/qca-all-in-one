@@ -1,13 +1,12 @@
 #!/bin/bash
 #
-# DIY2 - H68K + iStoreOS 24.10
 #
 # 第三方插件 / 依赖 / 来源优先级处理
 #
 # 来源优先级：
 #   1. package/myapp 独立第三方源码
 #   2. DIY1 添加的第三方集合源
-#   3. iStoreOS / OpenWrt 官方 feeds
+#   3. 完整daede内核依赖
 #
 
 set -e
@@ -608,7 +607,91 @@ done
 
 
 ###############################################################################
-# 14. DIY2 完成
+# 14. IPQ60xx 内核大小修改 + SKB Recycler
+###############################################################################
+
+echo
+echo "========================================"
+echo "修改 IPQ60xx 内核大小 / 开启 SKB Recycler"
+echo "========================================"
+
+
+###############################################################################
+# 修改内核大小
+###############################################################################
+
+set_kernel_size() {
+
+    # 修改 JDC AX1800 Pro 的内核大小为 12M
+    image_file='./target/linux/qualcommax/image/ipq60xx.mk'
+
+    if [ ! -f "$image_file" ]; then
+        echo "WARNING: 未找到 $image_file"
+        return 0
+    fi
+
+    sed -i "/^define Device\/emmc-common/,/^endef/ s/KERNEL_SIZE := 6144k/KERNEL_SIZE := 12288k/" "$image_file"
+
+    sed -i "/^define Device\/nand-common/,/^endef/ s/^endef/\tKERNEL_SIZE := 8192k\nendef/" "$image_file"
+
+    sed -i "/^define Device\/jdcloud_re-ss-01/,/^endef/ { /KERNEL_SIZE := 6144k/s//KERNEL_SIZE := 12288k/ }" "$image_file"
+
+    sed -i "/^define Device\/jdcloud_re-cs-02/,/^endef/ { /KERNEL_SIZE := 6144k/s//KERNEL_SIZE := 12288k/ }" "$image_file"
+
+    sed -i "/^define Device\/jdcloud_re-cs-07/,/^endef/ { /KERNEL_SIZE := 6144k/s//KERNEL_SIZE := 12288k/ }" "$image_file"
+
+    sed -i "/^define Device\/link_nn6000-common/,/^endef/ { /KERNEL_SIZE := 6144k/s//KERNEL_SIZE := 12288k/ }" "$image_file"
+
+    sed -i "/^define Device\/linksys_mr/,/^endef/ { /KERNEL_SIZE := 8192k/s//KERNEL_SIZE := 12288k/ }" "$image_file"
+
+    sed -i "/^define Device\/linksys_mr7350/,/^endef/ s/^endef/\tIMAGE_SIZE := 12288k\nendef/" "$image_file"
+
+    echo "IPQ60xx 内核大小修改完成"
+}
+
+
+###############################################################################
+# 开启内存回收补丁
+###############################################################################
+
+enable_skb_recycler() {
+
+    local config_file="$1"
+
+    if [ ! -f "$config_file" ]; then
+        echo "WARNING: 未找到配置文件: $config_file"
+        return 0
+    fi
+
+    # 防止重复配置
+    sed -i '/^CONFIG_KERNEL_SKB_RECYCLER=/d' "$config_file"
+    sed -i '/^CONFIG_KERNEL_SKB_RECYCLER_MULTI_CPU=/d' "$config_file"
+
+    cat >> "$config_file" <<EOF
+CONFIG_KERNEL_SKB_RECYCLER=y
+CONFIG_KERNEL_SKB_RECYCLER_MULTI_CPU=y
+EOF
+
+    echo "CONFIG_KERNEL_SKB_RECYCLER=y"
+    echo "CONFIG_KERNEL_SKB_RECYCLER_MULTI_CPU=y"
+}
+
+
+###############################################################################
+# 执行内核修改
+###############################################################################
+
+set_kernel_size
+
+if [ -f .config ]; then
+    enable_skb_recycler ".config"
+else
+    echo "WARNING: .config 不存在，跳过 SKB Recycler 配置"
+fi
+
+
+###############################################################################
+# 15. DIY2 完成
 ###############################################################################
 
 echo
