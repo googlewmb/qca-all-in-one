@@ -32,7 +32,7 @@ jobs:
     strategy:
       matrix:
         config:
-          - 
+          - ipq60x
           - ipq807x
 
     env:
