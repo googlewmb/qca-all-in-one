@@ -21,7 +21,7 @@ env:
   REPO_BRANCH: 25.12-nss
   CONFIG_FILE: nss/immortalwrt/.config
   DIY_P1_SH: nss/diy-part1.sh
-  DIY_P2_SH: nss/diy-part2.sh
+  DIY_P2_SH: nss/diy-part3.sh
   UPLOAD_BIN: true
   UPLOAD_FIRMWARE: true
   UPLOAD_RELEASE: true
