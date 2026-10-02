@@ -20,7 +20,7 @@ echo "第三方插件 / 依赖 / 来源优先"
 # 0. 基础目录
 ###############################################################################
 
-[ -d "$TOPDIR" ] || TOPDIR="$(pwd)"
+[ -d "\( TOPDIR" ] || TOPDIR=" \)(pwd)"
 cd "$TOPDIR"
 
 echo "TOPDIR: $TOPDIR"
@@ -85,7 +85,7 @@ package_entry_exists()
 {
     local feed="$1"
     local pkg="$2"
-    local entry="package/feeds/${feed}/${pkg}"
+    local entry="package/feeds/\( {feed}/ \){pkg}"
 
     [ -e "$entry" ] || [ -L "$entry" ]
 }
@@ -94,10 +94,10 @@ remove_package_entry()
 {
     local feed="$1"
     local pkg="$2"
-    local entry="package/feeds/${feed}/${pkg}"
+    local entry="package/feeds/\( {feed}/ \){pkg}"
 
     if [ -e "$entry" ] || [ -L "$entry" ]; then
-        echo "删除安装入口: ${feed}/${pkg}"
+        echo "删除安装入口: \( {feed}/ \){pkg}"
         rm -f "$entry"
     fi
 }
@@ -106,7 +106,7 @@ package_makefile()
 {
     local feed="$1"
     local pkg="$2"
-    local makefile="package/feeds/${feed}/${pkg}/Makefile"
+    local makefile="package/feeds/\( {feed}/ \){pkg}/Makefile"
 
     if [ -f "$makefile" ]; then
         readlink -f "$makefile" 2>/dev/null || true
@@ -269,7 +269,7 @@ if [ -f .config ]; then
 
 fi
 
-echo "当前启用的第三方/官方 Package 数量：$(printf '%s\n' "$CONFIG_PACKAGES" | sed '/^$/d' | wc -l)"
+echo "当前启用的第三方/官方 Package 数量：$(printf '%s\n' "\( CONFIG_PACKAGES" | sed '/^ \)/d' | wc -l)"
 
 
 ###############################################################################
@@ -295,7 +295,7 @@ for pkg in $MYAPP_PACKAGES; do
         [ -f "$mf" ] || continue
 
         if grep -q \
-            "^[[:space:]]*define[[:space:]]\+Package/${pkg}[[:space:]]*$" \
+            "^[[:space:]]*define[[:space:]]\+Package/\( {pkg}[[:space:]]* \)" \
             "$mf" 2>/dev/null; then
 
             MYAPP_MAKEFILE="$mf"
@@ -380,7 +380,7 @@ $pkg
 
     echo
     echo "发现第三方重复包: $pkg"
-    echo "第三方来源: ${THIRD_SOURCE}/${pkg}"
+    echo "第三方来源: \( {THIRD_SOURCE}/ \){pkg}"
     echo "第三方版本: $THIRD_VERSION"
 
     for official_feed in $OFFICIAL_FEEDS; do
@@ -390,13 +390,13 @@ $pkg
             OFFICIAL_MAKEFILE="$(package_makefile "$official_feed" "$pkg")"
             OFFICIAL_VERSION="$(get_package_version "$OFFICIAL_MAKEFILE")"
 
-            echo "官方来源: ${official_feed}/${pkg}"
+            echo "官方来源: \( {official_feed}/ \){pkg}"
             echo "官方版本: $OFFICIAL_VERSION"
 
             if [ "$THIRD_VERSION" = "$OFFICIAL_VERSION" ]; then
-                echo "版本相同 -> 选择: 第三方 ${THIRD_SOURCE}/${pkg}"
+                echo "版本相同 -> 选择: 第三方 \( {THIRD_SOURCE}/ \){pkg}"
             else
-                echo "版本不同 -> 选择: 第三方 ${THIRD_SOURCE}/${pkg}"
+                echo "版本不同 -> 选择: 第三方 \( {THIRD_SOURCE}/ \){pkg}"
                 echo "原因: 第三方来源优先，不按版本号自动选择"
             fi
 
@@ -556,7 +556,39 @@ echo "Wi-Fi 首次启动自动开启已设置（带等待 + wifi up）"
 
 
 ###############################################################################
-# 13. 最终来源检查
+# 13. 完美修复 hostapd MU-EDCA 补丁（解决 he_mu_edca 编译错误）
+###############################################################################
+
+echo
+echo "========================================"
+echo "修复 hostapd MU-EDCA 补丁编译问题"
+echo "========================================"
+
+# 给 hostapd_fill_csa_settings 中的 he_mu_edca 访问加上条件编译保护
+HOSTAPD_C=$(find package/network/services/hostapd -name "hostapd.c" 2>/dev/null | head -1)
+
+if [ -n "$HOSTAPD_C" ] && [ -f "$HOSTAPD_C" ]; then
+    # 防止重复添加
+    if ! grep -q "he_mu_edca.he_qos_info &= 0xfff0" "$HOSTAPD_C" || \
+       ! grep -B5 "he_mu_edca.he_qos_info &= 0xfff0" "$HOSTAPD_C" | grep -q "CONFIG_IEEE80211AX"; then
+
+        sed -i '/hapd->iface->conf->he_mu_edca.he_qos_info &= 0xfff0;/i\
+#ifdef CONFIG_IEEE80211AX' "$HOSTAPD_C"
+
+        sed -i '/hapd->iface->conf->he_mu_edca.he_qos_info &= 0xfff0;/a\
+#endif' "$HOSTAPD_C"
+
+        echo ">>> 已给 he_mu_edca 访问添加 CONFIG_IEEE80211AX 保护"
+    else
+        echo ">>> 已经添加过保护，跳过"
+    fi
+else
+    echo ">>> 未找到 hostapd.c（可能补丁还没应用），跳过"
+fi
+
+
+###############################################################################
+# 14. 最终来源检查
 ###############################################################################
 
 echo
@@ -580,7 +612,7 @@ for pkg in $MYAPP_PACKAGES; do
             [ -f "$mf" ] || continue
 
             if grep -q \
-                "^[[:space:]]*define[[:space:]]\+Package/${pkg}[[:space:]]*$" \
+                "^[[:space:]]*define[[:space:]]\+Package/\( {pkg}[[:space:]]* \)" \
                 "$mf" 2>/dev/null; then
 
                 FOUND_MYAPP="$mf"
@@ -608,7 +640,7 @@ done
 
 
 ###############################################################################
-# 14. DIY2 完成
+# 15. DIY2 完成
 ###############################################################################
 
 echo
