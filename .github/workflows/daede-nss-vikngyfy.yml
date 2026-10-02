@@ -34,9 +34,10 @@ jobs:
         config:
           - ipq60x.txt
           - ipq80x.txt
+      fail-fast: false
 
     env:
-      CONFIG_BUILD: nss/immortalwrt/${{ matrix.config }}.txt
+      CONFIG_BUILD: nss/immortalwrt/${{ matrix.config }}
       BUILD_CONFIG_ONLY: ${{ github.event.inputs.BUILD_CONFIG_ONLY || 'false' }}
 
     runs-on: ubuntu-latest
@@ -76,7 +77,7 @@ jobs:
         sudo timedatectl set-timezone "$TZ"
         echo "date1=$(date +'%Y.%m.%d-%H.%M')" >> $GITHUB_ENV
         echo "date2=$(date +'%Y.%m.%d')" >> $GITHUB_ENV
-        echo "date3=$(date "+%Y年%m月%d日")" >> $GITHUB_ENV
+        echo "date3=$(date '+%Y年%m月%d日')" >> $GITHUB_ENV
 
     - name: 下载固件源码
       run: |
@@ -96,7 +97,7 @@ jobs:
 
     - name: 加载config 执行DIY_P2_SH defconfig
       run: |
-        [ -e "${{ env.CONFIG_BUILD }}" ] && mv "${{ env.CONFIG_BUILD }}" openwrt/.config
+        [ -e "${GITHUB_WORKSPACE}/${{ env.CONFIG_BUILD }}" ] && mv "${GITHUB_WORKSPACE}/${{ env.CONFIG_BUILD }}" openwrt/.config
         chmod +x "${GITHUB_WORKSPACE}/${{ env.DIY_P2_SH }}"
         cd openwrt
         "${GITHUB_WORKSPACE}/${{ env.DIY_P2_SH }}"
@@ -185,8 +186,6 @@ jobs:
 
         cd firmware
 
-        sudo apt-get install -y rename
-
         if [ -f config.buildinfo ]; then
           mv config.buildinfo \
           "${{ env.date1 }}_${{ env.OPENWRT_NAME }}_${{ env.DEVICE_NAME }}_config.buildinfo"
@@ -213,6 +212,7 @@ jobs:
       run: |
         touch release.txt
         echo "由衷感谢所有为openwrt无私奉献的大佬们" >> release.txt
+        echo "当前配置: ${{ matrix.config }}" >> release.txt
         echo "📥 固件下载" >> release.txt
 
     - name: 发布至release
@@ -220,8 +220,8 @@ jobs:
       uses: softprops/action-gh-release@master
       with:
         files: ${{ env.FIRMWARE }}/*
-        name: ${{ env.date3 }}
-        tag_name: ${{ env.date2 }}
+        name: ${{ env.date3 }}-${{ matrix.config }}
+        tag_name: ${{ env.date2 }}-${{ matrix.config }}
         body_path: release.txt
 
     - name: config文件上传自动更新1
@@ -236,14 +236,24 @@ jobs:
 
     - name: config文件上传自动更新3
       run: |
-        cp ./openwrt/.config "${GITHUB_WORKSPACE}/main/${{ env.CONFIG_FILE }}"
+        # 每个 matrix 保存独立文件，避免互相覆盖
+        cp ./openwrt/.config "${GITHUB_WORKSPACE}/main/nss/immortalwrt/${{ matrix.config }}.config"
         cd $GITHUB_WORKSPACE/main
         git add .
         if git diff --cached --quiet; then
           echo "nothing to commit"
         else
-          git commit -am "update $(date '+%Y-%m-%d %H:%M:%S')"
-          git push --quiet "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ env.REPO }}.git" HEAD:main
+          git commit -am "update ${{ matrix.config }} $(date '+%Y-%m-%d %H:%M:%S')"
+          # 并发 push 重试（最多5次）
+          for i in 1 2 3 4 5; do
+            git pull --rebase origin main || true
+            if git push --quiet "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ env.REPO }}.git" HEAD:main; then
+              echo "push success"
+              break
+            fi
+            echo "push failed, retry $i ..."
+            sleep 10
+          done
         fi
 
     - name: 查看磁盘使用情况
