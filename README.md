@@ -1,7 +1,7 @@
 默认编译
 daede全内核依赖
 部分机型内核调整了，需要大分区才能正常使用。具体看diy2调整内核的机型。
-默认集成
+带usb机器默认集成
 CONFIG_PACKAGE_luci-app-daede=y
 CONFIG_PACKAGE_luci-app-daed=y
 配合smartdns使用更佳。
