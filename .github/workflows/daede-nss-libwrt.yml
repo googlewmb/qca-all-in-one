@@ -4,6 +4,13 @@ permissions: write-all
 
 on:
   workflow_dispatch:
+    inputs:
+      BUILD_CONFIG_ONLY:
+        description: '仅输出完整配置，不编译固件'
+        required: true
+        default: false
+        type: boolean
+
   schedule:
     - cron: "16 16 * * *"
 
@@ -30,6 +37,7 @@ jobs:
 
     env:
       CONFIG_BUILD: nss/immortalwrt/${{ matrix.config }}.txt
+      BUILD_CONFIG_ONLY: ${{ github.event.inputs.BUILD_CONFIG_ONLY || 'false' }}
 
     runs-on: ubuntu-latest
 
@@ -145,7 +153,41 @@ jobs:
         EOF
         chmod 0755 files/etc/uci-defaults/zz-enable-wifi
 
+    - name: 仅输出完整配置
+      if: env.BUILD_CONFIG_ONLY == 'true'
+      working-directory: ./openwrt
+      run: |
+        echo "========================================"
+        echo "仅输出完整配置模式"
+        echo "========================================"
+        echo "当前配置: ${{ matrix.config }}"
+        echo
+
+        echo "========== 完整 .config =========="
+        cat .config
+        echo "========== 完整 .config 结束 =========="
+
+        mkdir -p config-output
+
+        cp .config \
+          "config-output/${{ matrix.config }}_${{ env.date1 }}_full.config"
+
+        echo
+        echo "========================================"
+        echo "配置文件已生成"
+        echo "========================================"
+
+        ls -lh config-output/
+
+    - name: 上传完整配置
+      if: env.BUILD_CONFIG_ONLY == 'true'
+      uses: actions/upload-artifact@main
+      with:
+        name: config_${{ env.OPENWRT_NAME }}_${{ matrix.config }}_${{ env.date1 }}
+        path: openwrt/config-output/*.config
+
     - name: 下载安装包
+      if: env.BUILD_CONFIG_ONLY != 'true'
       working-directory: ./openwrt
       run: |
         make download -j$(nproc)
@@ -154,12 +196,14 @@ jobs:
 
     - name: 编译固件
       id: compile
+      if: env.BUILD_CONFIG_ONLY != 'true'
       working-directory: ./openwrt
       run: |
         echo -e "$(nproc) thread compile"
         make -j$(nproc) || make -j1 || make -j1 V=s
 
     - name: 获取固件设备名字
+      if: env.BUILD_CONFIG_ONLY != 'true'
       working-directory: ./openwrt
       run: |
         DEVICE_NAME=$(grep '^CONFIG_TARGET_.*_DEVICE_.*=y' .config | sed -r 's/^CONFIG_TARGET_(.*)_DEVICE_(.*)=y/\1_\2/' | head -n 1)
