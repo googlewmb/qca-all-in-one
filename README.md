@@ -1,50 +1,211 @@
-默认编译
+# QCA All-in-One
 
-daede全内核依赖
+Qualcomm IPQ60xx / IPQ807x 多设备 OpenWrt / LibWrt 自动编译项目。
 
-部分机型内核调整了，需要大分区才能正常使用。具体看diy2调整内核的机型。
+本项目集成 Daede/Daed、Qualcomm NSS、BPF/XDP 以及多种常用网络、代理、存储和系统管理插件，并提供多设备配置及 GitHub Actions 自动编译。
 
+## 编译源码
 
-带usb机器默认集成
-CONFIG_PACKAGE_luci-app-daede=y
-CONFIG_PACKAGE_luci-app-daed=y
-配合smartdns使用更佳。
+本项目根据不同编译工作流使用以下源码：
 
-upstream {
-  cn_dns: 'udp://127.0.0.1:6053'
-  foreign_dns: 'tcp://127.0.0.1:6553'
-}
+### LibWrt
 
-routing {
-  request {
-    qname(geosite:category-ads-all) -> reject
-    qname(geosite:cn) -> cn_dns
-    fallback: foreign_dns
-  }
+- 源码：https://github.com/LiBwrt/LibWrt
+- 分支：`25.12-nss`
 
-  response {
-    upstream(foreign_dns) -> accept
-    !qname(geosite:cn) && ip(geoip:private) -> foreign_dns
-    !qname(geosite:cn) && ip(geoip:cn) -> foreign_dns
-    fallback: accept
-  }
-}
+### VIKINGYFY ImmortalWrt
 
+- 源码：https://github.com/VIKINGYFY/immortalwrt
+- 分支：`main`
 
+### 项目源码
 
-AX6-3600-9000-AP8220-雅典娜等
-全满血nss
-默认192.168.1.1
-无线12345678
+- https://github.com/googlewmb/qca-all-in-one
 
-带完整daede内核配置，插件请自行ssh一键安装脚本。
-https://raw.githubusercontent.com/kenzok8/openwrt-daede/refs/heads/main/scripts/install.sh
+## 支持设备
 
+本项目支持 Qualcomm IPQ60xx / IPQ807x 多款设备，已集成完整 Daede/Daed 环境、Qualcomm NSS、BPF/XDP 以及常用插件。
 
+### IPQ60xx
 
-wget --no-check-certificate -O - https://ghfast.top/https://raw.githubusercontent.com/kenzok8/openwrt-daede/refs/heads/main/scripts/install.sh | ash
+- 360 V6
+- AnySafe E1
+- CMIOT AX18
+- DPTech AP3000-2C
+- GL.iNet GL-AX1800
+- GL.iNet GL-AXT1800
+- JDCloud RE-CS-02
+- JDCloud RE-SS-01
+- Link NN6000 V1
+- Link NN6000 V2
+- Linksys MR7350
+- Linksys MR7500
+- Philips LY1800
+- Redmi AX5
+- Redmi AX5 JDCloud
+- SY-Y6010
+- Xiaomi AX1800
+- ZN M2
 
+### IPQ807x
 
+- Aliyun AP8220
+- Xiaomi AX9000
+- Xiaomi AX9000 Stock
 
-openwrt主线专用
-wget -qO- https://down.dllkids.xyz/openwrt-feed/openwrt-feed-setup.sh | sh
+### IPQ807x 无 USB
+
+- Redmi AX6
+- Redmi AX6 Stock
+- Xiaomi AX3600
+- Xiaomi AX3600 Stock
+
+## Daede / Daed
+
+所有设备配置均已集成 Daede/Daed 相关环境，并根据不同平台提供对应的内核、BPF/XDP、Qualcomm NSS 等支持。
+
+主要包括：
+
+- Daede / Daed
+- BPF
+- CGROUP
+- CGROUP_BPF
+- BPF Events
+- XDP
+- XDP Sockets
+- BPF Toolchain
+- Qualcomm NSS
+- NSS ECM
+- NSS DP
+- NSS Crypto
+- NSS Bridge Manager
+- NSS PPPoE
+- NSS VLAN Manager
+- NSS VXLAN
+- NSS GRE
+- NSS L2TP
+- NSS PPTP
+- NSS Qdisc
+- NSS Netlink
+- NSS Mirror
+- NSS MAP-T
+- NSS Tun6RD
+- NSS TunIPIP6
+- Qualcomm SSDK
+
+不同设备根据硬件平台和内核版本使用对应的配置。
+
+## 已集成插件
+
+项目配置文件已经集成多种常用插件，包括：
+
+- PassWall
+- Daede / Daed
+- SmartDNS
+- MosDNS
+- WireGuard
+- UPnP
+- DDNS-Go
+- Lucky
+- Samba4
+- Diskman
+- FileTransfer
+- MiniDLNA
+- TTYD
+- WOLPlus
+- CPUFreq
+- RAMFree
+- 自动重启
+- 软件包管理器
+- 时间控制
+- HD Idle
+
+不同设备的插件配置可能有所不同，以对应设备的 `.config` 为准。
+
+## 第三方插件源码
+
+项目通过 DIY 脚本及第三方 feeds 集成插件源码和相关依赖。
+
+### PassWall
+
+- https://github.com/Openwrt-Passwall/openwrt-passwall
+- https://github.com/Openwrt-Passwall/openwrt-passwall-packages
+
+### OpenClash
+
+- https://github.com/vernesong/OpenClash
+
+### SmartDNS
+
+- https://github.com/pymumu/smartdns
+- https://github.com/pymumu/luci-app-smartdns
+
+### MosDNS
+
+- https://github.com/sbwml/luci-app-mosdns
+
+### HomeProxy
+
+- https://github.com/immortalwrt/homeproxy
+
+### V2Ray GeoData
+
+- https://github.com/sbwml/v2ray-geodata
+
+### OLED
+
+- https://github.com/jjm2473/luci-app-oled
+
+### LCDSimple
+
+- https://github.com/jjm2473/lcdsimple
+
+### Diskman
+
+- https://github.com/jjm2473/luci-app-diskman
+
+### OpenAppFilter
+
+- https://github.com/jjm2473/OpenAppFilter
+
+### NATMap
+
+- https://github.com/muink/openwrt-natmapt
+
+### STUNTMAN
+
+- https://github.com/muink/openwrt-stuntman
+
+### NATMap LuCI
+
+- https://github.com/muink/luci-app-natmapt
+
+## 第三方 Feeds
+
+项目同时使用多个第三方 feeds：
+
+### 官方 Feeds
+
+- packages
+- luci
+- routing
+- telephony
+- store
+- third
+
+### 第三方 Feeds
+
+- nas
+- nas_luci
+- jjm2473_apps
+- kenzo
+- small
+
+项目通过 DIY 脚本对第三方插件及官方 feeds 中的重复软件包进行处理，并优先使用项目自定义源码。
+
+## 自定义插件
+
+需要增加其他插件时，直接在对应设备配置文件中添加：
+
+```text
+CONFIG_PACKAGE_插件名称=y
