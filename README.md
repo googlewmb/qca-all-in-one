@@ -2,7 +2,7 @@
 
 Qualcomm IPQ60xx / IPQ807x 多设备 OpenWrt / LibWrt 自动编译项目。
 
-本项目集成 Daede/Daed、Qualcomm NSS、BPF/XDP 以及多种常用网络、代理、存储和系统管理插件，并提供多设备配置及 GitHub Actions 自动编译。
+本项目集成 Daede/Daed、Qualcomm NSS、BPF/XDP 以及多种常用网络、代理、存储和系统管理插件，无线默认无密码或者12345678，连接数655550，并提供多设备配置及 GitHub Actions 自动编译。
 
 ## 编译源码
 
