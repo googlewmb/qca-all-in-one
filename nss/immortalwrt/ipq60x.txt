@@ -73,8 +73,11 @@ CONFIG_PACKAGE_luci-app-hd-idle=y
 CONFIG_PACKAGE_luci-app-filetransfer=y
 CONFIG_PACKAGE_luci-app-samba4=y
 
+
+# 集成daede
+CONFIG_PACKAGE_dae=y
+CONFIG_PACKAGE_daed=y
 CONFIG_PACKAGE_luci-app-daede=y
-CONFIG_PACKAGE_luci-app-daed=y
 
 
 
