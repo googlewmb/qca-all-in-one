@@ -731,7 +731,7 @@ CONFIG_PACKAGE_luci-mod-system=y
 
 CONFIG_PACKAGE_luci-app-autoreboot=y
 CONFIG_PACKAGE_luci-app-cpufreq=y
-CONFIG_PACKAGE_luci-app-daede_daed=y
+CONFIG_PACKAGE_luci-app-daede_daed=n
 CONFIG_PACKAGE_luci-app-firewall=y
 CONFIG_PACKAGE_luci-app-fullconenat-sonic=y
 CONFIG_PACKAGE_luci-app-natmapt=y
@@ -758,8 +758,13 @@ CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_ShadowsocksR_Libev_Client=y
 CONFIG_PACKAGE_luci-app-ttyd=y
 CONFIG_PACKAGE_luci-app-upnp=y
 
+
+
+
+# 集成daede
+CONFIG_PACKAGE_dae=y
+CONFIG_PACKAGE_daed=y
 CONFIG_PACKAGE_luci-app-daede=y
-CONFIG_PACKAGE_luci-app-daed=y
 
 # ==================== LuCI 插件 / =n ====================
 
