@@ -18,7 +18,7 @@ env:
   OPENWRT_NAME: Openwrt
   REPO: googlewmb/qca-all-in-one
   REPO_URL: https://github.com/VIKINGYFY/immortalwrt
-  REPO_BRANCH: main
+  REPO_BRANCH: owrt
   CONFIG_FILE: nss/immortalwrt/.config
   DIY_P1_SH: nss/diy-part1.sh
   DIY_P2_SH: nss/diy-part2.sh
