@@ -235,11 +235,14 @@ CONFIG_KERNEL_CGROUPS=y
 CONFIG_KERNEL_CGROUP_BPF=y
 CONFIG_KERNEL_BPF_EVENTS=y
 
-CONFIG_BPF_TOOLCHAIN_HOST=y
-
 CONFIG_KERNEL_XDP_SOCKETS=y
 CONFIG_PACKAGE_kmod-xdp-sockets-diag=y
 CONFIG_PACKAGE_kmod-sched-bpf=y
+
+# bpf编译工具默认vm完整，会从源码编译 LLVM，用于支持 BTF / eBPF。如遇到云编译编译时间过长可选择host,然后llvm改成is not set即可
+# CONFIG_BPF_TOOLCHAIN_NONE is not set
+# CONFIG_BPF_TOOLCHAIN_HOST is not set
+CONFIG_BPF_TOOLCHAIN_BUILD_LLVM=y
 
 
 # ============================================================
