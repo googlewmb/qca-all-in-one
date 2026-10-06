@@ -759,12 +759,16 @@ CONFIG_PACKAGE_luci-app-ttyd=y
 CONFIG_PACKAGE_luci-app-upnp=y
 
 
-
-
-# 集成daede
+# 集成daede后端内核
 CONFIG_PACKAGE_dae=y
 CONFIG_PACKAGE_daed=y
+# daed可用分流包
+CONFIG_PACKAGE_daed-geoip=y
+CONFIG_PACKAGE_daed-geosite=y
+# daede优化面板
 CONFIG_PACKAGE_luci-app-daede=y
+
+
 
 # ==================== LuCI 插件 / =n ====================
 
