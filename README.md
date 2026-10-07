@@ -16,7 +16,7 @@ Qualcomm IPQ60xx / IPQ807x 多设备 OpenWrt / LibWrt 自动编译项目。
 ### VIKINGYFY ImmortalWrt
 
 - 源码：https://github.com/VIKINGYFY/immortalwrt
-- 分支：`owrt`切换原生 Qualcomm 硬件流加速
+- 分支：`owrt`切换原生 Qualcomm 硬件流加速&暂时保留nss的编译
 
 ### 项目源码
 
