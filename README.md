@@ -24,7 +24,7 @@ Qualcomm IPQ60xx / IPQ807x 多设备 OpenWrt / LibWrt 自动编译项目。
 
 ## 支持设备
 
-本项目支持 Qualcomm IPQ60xx / IPQ807x 多款设备，已集成完整 Daede/Daed 环境、Qualcomm NSS、BPF/XDP 以及常用插件。
+本项目支持 Qualcomm IPQ60xx / IPQ807x 多款设备，已集成完整 Daede/Daed 环境、Qualcomm NSS、BPF/XDP 原生Qualcomm 硬件流加速以及常用插件。
 
 ### IPQ60xx
 
