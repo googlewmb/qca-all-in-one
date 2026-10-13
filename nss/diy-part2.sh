@@ -52,44 +52,92 @@ echo "更新并安装新依赖索引..."
 
 
 ###############################################################################
-# 1.4 移除 ImmortalWrt 官方 dae / daed 核心，使用 small 软件源
+# 1.4 强制使用 kenzok8/small 的 dae / daed 核心
 ###############################################################################
 
 echo
 echo "========================================"
-echo "移除官方 dae / daed 核心"
-echo "保留 kenzok8/small 软件源核心"
+echo "强制使用 small 软件源的 dae / daed 核心"
 echo "========================================"
 
+# 确认 small 软件源存在
+if [ ! -d "feeds/small" ]; then
+    echo "ERROR：feeds/small 不存在，无法安装 dae / daed"
+    exit 1
+fi
+
+# 确认 small 源包含两个核心的 Makefile
+for pkg in dae daed; do
+    if [ ! -f "feeds/small/${pkg}/Makefile" ]; then
+        echo "ERROR：small 源缺少 ${pkg}/Makefile"
+        exit 1
+    fi
+done
+
+# 移除官方 packages 源的 dae / daed 源码及安装入口
 for pkg in dae daed; do
 
-    # 官方 packages feed 核心源码目录
     official_dir="feeds/packages/net/${pkg}"
+    official_entry="package/feeds/packages/${pkg}"
 
-    if [ -f "${official_dir}/Makefile" ]; then
+    if [ -d "${official_dir}" ]; then
         echo "移除官方核心源码：${official_dir}"
         rm -rf -- "${official_dir}"
     fi
 
-    # 官方 packages feed 安装入口
-    official_entry="package/feeds/packages/${pkg}"
-
     if [ -e "${official_entry}" ] || [ -L "${official_entry}" ]; then
-        echo "移除官方核心安装入口：${official_entry}"
+        echo "移除官方核心入口：${official_entry}"
         rm -f -- "${official_entry}"
     fi
 
-    # 检查 small 软件源核心入口
-    small_entry="package/feeds/small/${pkg}"
+done
 
-    if [ -e "${small_entry}" ] || [ -L "${small_entry}" ]; then
-        echo "保留 small 软件源核心：${small_entry}"
-    else
-        echo "WARNING：small 软件源中未找到 ${pkg}：${small_entry}"
-        echo "请检查 small 软件源中的实际目录及包名"
+# 强制从 small 软件源安装 dae / daed
+echo
+echo "强制安装 small 源的 dae / daed..."
+
+./scripts/feeds install -f -p small dae daed
+
+# 验证 small 源的安装入口和 Makefile
+for pkg in dae daed; do
+
+    small_entry="package/feeds/small/${pkg}"
+    small_makefile="${small_entry}/Makefile"
+
+    if [ ! -e "${small_entry}" ] && [ ! -L "${small_entry}" ]; then
+        echo "ERROR：small 源安装入口不存在：${small_entry}"
+        exit 1
     fi
 
+    if [ ! -f "${small_makefile}" ]; then
+        echo "ERROR：核心 Makefile 不存在：${small_makefile}"
+        exit 1
+    fi
+
+    echo "确认核心来源：${small_entry}"
+    readlink -f "${small_makefile}" || true
+
 done
+
+# 强制启用两个核心的固件编译选项
+if [ ! -f ".config" ]; then
+    echo "ERROR：.config 不存在，无法启用 dae / daed"
+    exit 1
+fi
+
+sed -i \
+    -e '/^CONFIG_PACKAGE_dae=/d' \
+    -e '/^CONFIG_PACKAGE_daed=/d' \
+    .config
+
+cat >> .config <<'EOF'
+CONFIG_PACKAGE_dae=y
+CONFIG_PACKAGE_daed=y
+EOF
+
+echo "已启用：CONFIG_PACKAGE_dae=y"
+echo "已启用：CONFIG_PACKAGE_daed=y"
+echo "dae / daed 来源检查及编译选项设置完成"
 
 
 ###############################################################################
