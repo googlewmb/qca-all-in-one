@@ -39,8 +39,6 @@ CONFIG_BPF_TOOLCHAIN_HOST=y
 # ==================== 设备型号 ====================
 
 CONFIG_TARGET_DEVICE_qualcommax_ipq807x_DEVICE_aliyun_ap8220=y
-CONFIG_TARGET_DEVICE_qualcommax_ipq807x_DEVICE_xiaomi_ax9000-stock=y
-CONFIG_TARGET_DEVICE_qualcommax_ipq807x_DEVICE_xiaomi_ax9000=y
 
 # ==================== 固件镜像 ====================
 
