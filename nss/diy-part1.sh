@@ -29,14 +29,14 @@ https://github.com/pymumu/smartdns.git \
 smartdns
 
 # MosDNS
-#git clone -b v5 --depth 1 \
-#https://github.com/sbwml/luci-app-mosdns.git \
-#mosdns
+git clone -b v5 --depth 1 \
+https://github.com/sbwml/luci-app-mosdns.git \
+mosdns
 
 # V2Ray GeoData
-#git clone --depth 1 \
-#https://github.com/sbwml/v2ray-geodata.git \
-#v2ray-geodata
+git clone --depth 1 \
+https://github.com/sbwml/v2ray-geodata.git \
+v2ray-geodata
 
 # H68K / jjm2473
 git clone -b master --depth 1 \
