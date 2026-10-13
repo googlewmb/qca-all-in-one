@@ -35,7 +35,6 @@ echo "拉取/更新 核心依赖与 PassWall 组件"
 echo "========================================"
 
 
-
 # 1.2 移除官方旧库并拉取 PassWall
 rm -rf feeds/packages/net/{xray-core,v2ray-geodata,sing-box,chinadns-ng,dns2socks,hysteria,ipt2socks,microsocks,naiveproxy,shadowsocks-rust,shadowsocksr-libev,simple-obfs,tcping,v2ray-plugin,xray-plugin,geoview,shadow-tls}
 rm -rf feeds/luci/applications/luci-app-passwall
@@ -50,6 +49,46 @@ echo "更新并安装新依赖索引..."
 ./scripts/feeds install -p packages golang || true
 ./scripts/feeds install -f microsocks || true
 ./scripts/feeds install -a
+
+
+###############################################################################
+# 1.4 移除官方 dae / daed 核心，使用 small 软件源
+###############################################################################
+
+echo
+echo "========================================"
+echo "处理 dae / daed 核心来源"
+echo "========================================"
+
+for pkg in dae daed; do
+
+    # 移除官方 packages feed 中的核心源码
+    official_dir="feeds/packages/net/${pkg}"
+
+    if [ -f "${official_dir}/Makefile" ]; then
+        echo "移除官方核心源码：${official_dir}"
+        rm -rf -- "${official_dir}"
+    fi
+
+    # 移除官方 packages feed 的安装入口
+    official_entry="package/feeds/packages/${pkg}"
+
+    if [ -e "${official_entry}" ] || [ -L "${official_entry}" ]; then
+        echo "移除官方核心安装入口：${official_entry}"
+        rm -f -- "${official_entry}"
+    fi
+
+    # 检查 small 软件源是否存在对应入口
+    small_entry="package/feeds/small/${pkg}"
+
+    if [ -e "${small_entry}" ] || [ -L "${small_entry}" ]; then
+        echo "检测到 small 软件源核心：${small_entry}"
+    else
+        echo "WARNING：未检测到 small 软件源入口：${small_entry}"
+        echo "请确认 small 软件源中的实际目录、包名及安装入口。"
+    fi
+
+done
 
 
 ###############################################################################
