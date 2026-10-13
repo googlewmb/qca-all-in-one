@@ -52,43 +52,92 @@ echo "更新并安装新依赖索引..."
 
 
 ###############################################################################
-# 1.4 移除官方 dae / daed 核心，使用 small 软件源
+# 1.4 强制使用 kenzok8/small 的 dae / daed 核心
 ###############################################################################
 
 echo
 echo "========================================"
-echo "处理 dae / daed 核心来源"
+echo "强制使用 small 软件源的 dae / daed 核心"
 echo "========================================"
 
+# 确认 small 软件源存在
+if [ ! -d "feeds/small" ]; then
+    echo "ERROR：feeds/small 不存在，无法安装 dae / daed"
+    exit 1
+fi
+
+# 确认 small 源提供两个核心的 Makefile
+for pkg in dae daed; do
+    if [ ! -f "feeds/small/${pkg}/Makefile" ]; then
+        echo "ERROR：small 源缺少 ${pkg}/Makefile"
+        exit 1
+    fi
+done
+
+# 移除官方 packages feed 的 dae / daed 源码及安装入口
 for pkg in dae daed; do
 
-    # 移除官方 packages feed 中的核心源码
     official_dir="feeds/packages/net/${pkg}"
+    official_entry="package/feeds/packages/${pkg}"
 
-    if [ -f "${official_dir}/Makefile" ]; then
+    if [ -d "${official_dir}" ]; then
         echo "移除官方核心源码：${official_dir}"
         rm -rf -- "${official_dir}"
     fi
-
-    # 移除官方 packages feed 的安装入口
-    official_entry="package/feeds/packages/${pkg}"
 
     if [ -e "${official_entry}" ] || [ -L "${official_entry}" ]; then
         echo "移除官方核心安装入口：${official_entry}"
         rm -f -- "${official_entry}"
     fi
 
-    # 检查 small 软件源是否存在对应入口
-    small_entry="package/feeds/small/${pkg}"
+done
 
-    if [ -e "${small_entry}" ] || [ -L "${small_entry}" ]; then
-        echo "检测到 small 软件源核心：${small_entry}"
-    else
-        echo "WARNING：未检测到 small 软件源入口：${small_entry}"
-        echo "请确认 small 软件源中的实际目录、包名及安装入口。"
+# 强制从 small 源安装 dae / daed
+echo
+echo "强制安装 small 源的 dae / daed..."
+
+./scripts/feeds install -f -p small dae daed
+
+# 检查 small 源安装入口及 Makefile
+for pkg in dae daed; do
+
+    small_entry="package/feeds/small/${pkg}"
+    small_makefile="${small_entry}/Makefile"
+
+    if [ ! -e "${small_entry}" ] && [ ! -L "${small_entry}" ]; then
+        echo "ERROR：small 源安装入口不存在：${small_entry}"
+        exit 1
     fi
 
+    if [ ! -f "${small_makefile}" ]; then
+        echo "ERROR：核心 Makefile 不存在：${small_makefile}"
+        exit 1
+    fi
+
+    echo "确认核心来源：${small_entry}"
+    readlink -f "${small_makefile}" || true
+
 done
+
+# 强制启用两个核心的固件编译选项
+if [ ! -f ".config" ]; then
+    echo "ERROR：.config 不存在，无法启用 dae / daed"
+    exit 1
+fi
+
+sed -i \
+    -e '/^CONFIG_PACKAGE_dae=/d' \
+    -e '/^CONFIG_PACKAGE_daed=/d' \
+    .config
+
+cat >> .config <<'EOF'
+CONFIG_PACKAGE_dae=y
+CONFIG_PACKAGE_daed=y
+EOF
+
+echo "已启用：CONFIG_PACKAGE_dae=y"
+echo "已启用：CONFIG_PACKAGE_daed=y"
+echo "dae / daed 来源检查及编译选项设置完成"
 
 
 ###############################################################################
@@ -661,7 +710,7 @@ echo "========================================"
 
 set_kernel_size() {
 
-    # LibWrt IPQ60xx 设备定义文件
+    # 修改 JDC AX1800 Pro 的内核大小为 12M
     image_file='./target/linux/qualcommax/image/ipq60xx.mk'
 
     if [ ! -f "$image_file" ]; then
@@ -669,37 +718,21 @@ set_kernel_size() {
         return 0
     fi
 
-    # Redmi AX5 JDCloud：6M -> 12M
-    sed -i \
-        '/^define Device\/redmi_ax5-jdcloud$/,/^endef$/ s/^\tKERNEL_SIZE := 6144k$/\tKERNEL_SIZE := 12288k/' \
-        "$image_file"
+    sed -i "/^define Device\/emmc-common/,/^endef/ s/KERNEL_SIZE := 6144k/KERNEL_SIZE := 12288k/" "$image_file"
 
-    # Link NN6000 v1：6M -> 12M
-    # link_nn6000-v2 继承 link_nn6000-v1，因此 v2 同步为 12M
-    sed -i \
-        '/^define Device\/link_nn6000-v1$/,/^endef$/ s/^\tKERNEL_SIZE := 6144k$/\tKERNEL_SIZE := 12288k/' \
-        "$image_file"
+    sed -i "/^define Device\/nand-common/,/^endef/ s/^endef/\tKERNEL_SIZE := 8192k\nendef/" "$image_file"
 
-    # JDCloud RE-SS-01：6M -> 12M
-    sed -i \
-        '/^define Device\/jdcloud_re-ss-01$/,/^endef$/ s/^\tKERNEL_SIZE := 6144k$/\tKERNEL_SIZE := 12288k/' \
-        "$image_file"
+    sed -i "/^define Device\/jdcloud_re-ss-01/,/^endef/ { /KERNEL_SIZE := 6144k/s//KERNEL_SIZE := 12288k/ }" "$image_file"
 
-    # JDCloud RE-CS-02：6M -> 12M
-    sed -i \
-        '/^define Device\/jdcloud_re-cs-02$/,/^endef$/ s/^\tKERNEL_SIZE := 6144k$/\tKERNEL_SIZE := 12288k/' \
-        "$image_file"
+    sed -i "/^define Device\/jdcloud_re-cs-02/,/^endef/ { /KERNEL_SIZE := 6144k/s//KERNEL_SIZE := 12288k/ }" "$image_file"
 
-    # JDCloud RE-CS-07：6M -> 12M
-    sed -i \
-        '/^define Device\/jdcloud_re-cs-07$/,/^endef$/ s/^\tKERNEL_SIZE := 6144k$/\tKERNEL_SIZE := 12288k/' \
-        "$image_file"
+    sed -i "/^define Device\/jdcloud_re-cs-07/,/^endef/ { /KERNEL_SIZE := 6144k/s//KERNEL_SIZE := 12288k/ }" "$image_file"
 
-    # Linksys MR 公共定义：8M -> 12M
-    # MR7350 / MR7500 继承 Device/linksys_mr，因此同步为 12M
-    sed -i \
-        '/^define Device\/linksys_mr$/,/^endef$/ s/^\tKERNEL_SIZE := 8192k$/\tKERNEL_SIZE := 12288k/' \
-        "$image_file"
+    sed -i "/^define Device\/link_nn6000-common/,/^endef/ { /KERNEL_SIZE := 6144k/s//KERNEL_SIZE := 12288k/ }" "$image_file"
+
+    sed -i "/^define Device\/linksys_mr/,/^endef/ { /KERNEL_SIZE := 8192k/s//KERNEL_SIZE := 12288k/ }" "$image_file"
+
+    sed -i "/^define Device\/linksys_mr7350/,/^endef/ s/^endef/\tIMAGE_SIZE := 12288k\nendef/" "$image_file"
 
     echo "IPQ60xx 内核大小修改完成"
 }
