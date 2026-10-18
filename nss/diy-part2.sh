@@ -51,6 +51,22 @@ echo "更新并安装新依赖索引..."
 ./scripts/feeds install -f microsocks || true
 ./scripts/feeds install -a
 
+# 1.4 修复 miniupnpd 补丁冲突
+# feed 里的 miniupnpd 带有与 2.3.11 不匹配的补丁(020/030/040)，会导致 prepare 失败。
+# 源码自带 package/network/services/miniupnpd 的补丁可干净应用，因此移除 feed 版本。
+echo "修复 miniupnpd 补丁冲突"
+if [ -f package/network/services/miniupnpd/Makefile ]; then
+    rm -rf feeds/packages/net/miniupnpd
+    rm -rf package/feeds/packages/miniupnpd
+    echo "已移除 feed 的 miniupnpd，使用源码自带版本"
+else
+    # 兜底：源码自带版本不存在时，仅删除冲突补丁
+    rm -f feeds/packages/net/miniupnpd/patches/020-descr-filter-fix.patch \
+          feeds/packages/net/miniupnpd/patches/030-allow-private-fix.patch \
+          feeds/packages/net/miniupnpd/patches/040-improve-logging.patch
+    echo "未找到自带版本，已删除 feed 中冲突补丁"
+fi
+
 
 ###############################################################################
 # 2. 第三方依赖预处理 (明确要求的移除项)
