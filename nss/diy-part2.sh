@@ -19,7 +19,11 @@ echo "第三方插件 / 依赖 / 来源优先"
 # 0. 基础目录
 ###############################################################################
 
-[ -d "$TOPDIR" ] || TOPDIR="$(pwd)"
+TOPDIR="${TOPDIR:-$(pwd)}"
+[ -d "$TOPDIR" ] || {
+    echo "ERROR: TOPDIR 不存在: $TOPDIR"
+    exit 1
+}
 cd "$TOPDIR"
 
 echo "TOPDIR: $TOPDIR"
@@ -33,7 +37,6 @@ echo
 echo "========================================"
 echo "拉取/更新 核心依赖与 PassWall 组件"
 echo "========================================"
-
 
 
 # 1.2 移除官方旧库并拉取 PassWall
@@ -50,6 +53,25 @@ echo "更新并安装新依赖索引..."
 ./scripts/feeds install -p packages golang || true
 ./scripts/feeds install -f microsocks || true
 ./scripts/feeds install -a
+
+
+###############################################################################
+# 1.5 强制修复 miniupnpd 补丁冲突（2.3.11）
+###############################################################################
+
+echo
+echo "========================================"
+echo "强制修复 miniupnpd 补丁冲突"
+echo "========================================"
+
+# 删除导致编译失败的过时补丁
+rm -f feeds/packages/net/miniupnpd/patches/020-descr-filter-fix.patch
+
+# 清理可能残留的拒绝文件
+find feeds/packages/net/miniupnpd -name "*.rej" -delete 2>/dev/null || true
+find feeds/packages/net/miniupnpd -name "*.orig" -delete 2>/dev/null || true
+
+echo "miniupnpd 补丁冲突已强制修复"
 
 
 ###############################################################################
@@ -219,7 +241,7 @@ if [ -d package/myapp ]; then
         [ -n "$pkg" ] || continue
 
         case "$pkg" in
-            '\( ('*|*' \))'|*'/'*)
+            *'('*|*')'*|*'/'*)
                 continue
                 ;;
         esac
@@ -293,8 +315,8 @@ for pkg in $MYAPP_PACKAGES; do
 
         [ -f "$mf" ] || continue
 
-        if grep -q \
-            "^[[:space:]]*define[[:space:]]\+Package/${pkg}[[:space:]]*$" \
+        if grep -Eq \
+            "^[[:space:]]*define[[:space:]]+Package/${pkg}[[:space:]]*$" \
             "$mf" 2>/dev/null; then
 
             MYAPP_MAKEFILE="$mf"
@@ -518,7 +540,7 @@ cat > files/etc/uci-defaults/zz-enable-wifi <<'EOF'
 
 # 等待无线配置真正出现（最多约 30 秒，适配 ath11k / IPQ 晚加载）
 i=0
-while [ $i -lt 30 ]; do
+while [ "$i" -lt 30 ]; do
     [ -s /etc/config/wireless ] && break
     sleep 1
     i=$((i + 1))
@@ -578,8 +600,8 @@ for pkg in $MYAPP_PACKAGES; do
 
             [ -f "$mf" ] || continue
 
-            if grep -q \
-                "^[[:space:]]*define[[:space:]]\+Package/${pkg}[[:space:]]*$" \
+            if grep -Eq \
+                "^[[:space:]]*define[[:space:]]+Package/${pkg}[[:space:]]*$" \
                 "$mf" 2>/dev/null; then
 
                 FOUND_MYAPP="$mf"
