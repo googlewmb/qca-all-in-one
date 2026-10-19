@@ -1,19 +1,18 @@
+
 #!/bin/bash
-#
 #
 # 第三方插件 / 依赖 / 来源优先级处理
 #
 # 来源优先级：
 #   1. package/myapp 独立第三方源码
 #   2. DIY1 添加的第三方集合源
-#   3. 完整daede内核依赖
+#   3. 完整 daede 内核依赖
 #
 
 set -e
 
 echo "DIY2 - H68K + iStoreOS 24.10"
 echo "第三方插件 / 依赖 / 来源优先"
-
 
 ###############################################################################
 # 0. 基础目录
@@ -24,17 +23,14 @@ cd "$TOPDIR"
 
 echo "TOPDIR: $TOPDIR"
 
-
 ###############################################################################
-# 1. 核心依赖与第三方源码拉取 (优先于扫描逻辑)
+# 1. 核心依赖与第三方源码拉取
 ###############################################################################
 
 echo
 echo "========================================"
 echo "拉取/更新 核心依赖与 PassWall 组件"
 echo "========================================"
-
-
 
 # 1.2 移除官方旧库并拉取 PassWall
 rm -rf feeds/packages/net/{xray-core,v2ray-geodata,sing-box,chinadns-ng,dns2socks,hysteria,ipt2socks,microsocks,naiveproxy,shadowsocks-rust,shadowsocksr-libev,simple-obfs,tcping,v2ray-plugin,xray-plugin,geoview,shadow-tls}
@@ -45,31 +41,114 @@ rm -rf package/passwall-packages package/passwall-luci
 git clone --depth 1 https://github.com/Openwrt-Passwall/openwrt-passwall-packages package/passwall-packages
 git clone --depth 1 https://github.com/Openwrt-Passwall/openwrt-passwall package/passwall-luci
 
-# 1.3 关键：刷新并注册新拉取的包索引到编译环境
+# 1.3 刷新并注册新拉取的包索引
 echo "更新并安装新依赖索引..."
 ./scripts/feeds install -p packages golang || true
 ./scripts/feeds install -f microsocks || true
 ./scripts/feeds install -a
 
-# 1.4 修复 miniupnpd 补丁冲突
-# feed 里的 miniupnpd 带有与 2.3.11 不匹配的补丁(020/030/040)，会导致 prepare 失败。
-# 源码自带 package/network/services/miniupnpd 的补丁可干净应用，因此移除 feed 版本。
-echo "修复 miniupnpd 补丁冲突"
-if [ -f package/network/services/miniupnpd/Makefile ]; then
-    rm -rf feeds/packages/net/miniupnpd
-    rm -rf package/feeds/packages/miniupnpd
-    echo "已移除 feed 的 miniupnpd，使用源码自带版本"
+###############################################################################
+# 1.4 移植 VIKINGYFY miniupnpd 修复
+###############################################################################
+
+echo
+echo "========================================"
+echo "移植 VIKINGYFY miniupnpd 修复"
+echo "========================================"
+
+MINIUPNPD_COMMIT="99c39ee7476d1872b080ed486533e8520f3fdad3"
+MINIUPNPD_URL="https://codeload.github.com/VIKINGYFY/immortalwrt/tar.gz/${MINIUPNPD_COMMIT}"
+MINIUPNPD_TARGET="package/network/services/miniupnpd"
+MINIUPNPD_FEED="feeds/packages/net/miniupnpd"
+MINIUPNPD_ENTRY="package/feeds/packages/miniupnpd"
+
+MINIUPNPD_TMP="$(mktemp -d)"
+MINIUPNPD_ARCHIVE="${MINIUPNPD_TMP}/source.tar.gz"
+
+cleanup_miniupnpd()
+{
+    rm -rf "$MINIUPNPD_TMP"
+}
+
+# 下载指定提交
+if command -v curl >/dev/null 2>&1; then
+    curl -fL --retry 3 "$MINIUPNPD_URL" -o "$MINIUPNPD_ARCHIVE"
+elif command -v wget >/dev/null 2>&1; then
+    wget -O "$MINIUPNPD_ARCHIVE" "$MINIUPNPD_URL"
 else
-    # 兜底：源码自带版本不存在时，仅删除冲突补丁
-    rm -f feeds/packages/net/miniupnpd/patches/020-descr-filter-fix.patch \
-          feeds/packages/net/miniupnpd/patches/030-allow-private-fix.patch \
-          feeds/packages/net/miniupnpd/patches/040-improve-logging.patch
-    echo "未找到自带版本，已删除 feed 中冲突补丁"
+    echo "ERROR: curl 和 wget 均不可用"
+    cleanup_miniupnpd
+    exit 1
 fi
 
+# 解压源码
+mkdir -p "$MINIUPNPD_TMP/extracted"
+tar -xzf "$MINIUPNPD_ARCHIVE" -C "$MINIUPNPD_TMP/extracted"
+
+# 定位提交中的 miniupnpd 目录
+MINIUPNPD_MAKEFILE="$(
+    find "$MINIUPNPD_TMP/extracted" \
+        -type f \
+        -path '*/package/network/services/miniupnpd/Makefile' \
+        -print -quit
+)"
+
+if [ -z "$MINIUPNPD_MAKEFILE" ]; then
+    echo "ERROR: 指定提交中未找到 miniupnpd/Makefile"
+    cleanup_miniupnpd
+    exit 1
+fi
+
+MINIUPNPD_SOURCE="${MINIUPNPD_MAKEFILE%/Makefile}"
+
+# 校验预期版本
+if ! grep -Eq '^PKG_VERSION:=2\.3\.11$' "$MINIUPNPD_MAKEFILE" ||
+   ! grep -Eq '^PKG_RELEASE:=2$' "$MINIUPNPD_MAKEFILE"; then
+    echo "ERROR: miniupnpd 版本校验失败，取消覆盖"
+    cleanup_miniupnpd
+    exit 1
+fi
+
+# 校验关键补丁
+for patch in \
+    010-upnp-igdv2-compat.patch \
+    040-improve-logging.patch \
+    900-miniupnpd-format-xml-to-make-some-app-happy.patch
+do
+    if [ ! -f "$MINIUPNPD_SOURCE/patches/$patch" ]; then
+        echo "ERROR: 指定提交缺少补丁: $patch"
+        cleanup_miniupnpd
+        exit 1
+    fi
+done
+
+# 使用指定提交中的完整 miniupnpd 包覆盖主源码
+mkdir -p "$(dirname "$MINIUPNPD_TARGET")"
+rm -rf "$MINIUPNPD_TARGET"
+cp -a "$MINIUPNPD_SOURCE" "$MINIUPNPD_TARGET"
+
+# 移除 feed 重复版本和安装入口
+rm -rf "$MINIUPNPD_FEED"
+rm -rf "$MINIUPNPD_ENTRY"
+
+# 检查移植结果
+if [ ! -f "$MINIUPNPD_TARGET/Makefile" ]; then
+    echo "ERROR: miniupnpd 移植失败"
+    cleanup_miniupnpd
+    exit 1
+fi
+
+echo "miniupnpd 修复移植完成"
+echo "提交: $MINIUPNPD_COMMIT"
+echo "版本: 2.3.11"
+echo "PKG_RELEASE: 2"
+echo "源码: $MINIUPNPD_TARGET"
+echo "已清理 feed 冲突版本及安装入口"
+
+cleanup_miniupnpd
 
 ###############################################################################
-# 2. 第三方依赖预处理 (明确要求的移除项)
+# 2. 第三方依赖预处理
 ###############################################################################
 
 echo
@@ -145,7 +224,6 @@ for pkg in $REMOVE_OFFICIAL_DEPS; do
     done
 done
 
-
 ###############################################################################
 # 3. 获取包版本函数定义
 ###############################################################################
@@ -181,7 +259,6 @@ get_package_version()
     echo "$version"
 }
 
-
 ###############################################################################
 # 4. H68K DTS 处理
 ###############################################################################
@@ -194,28 +271,27 @@ get_package_version()
 # DTS_SOURCE="$GITHUB_WORKSPACE/test-istore/diy/H68K-DTS Linux6.1-6.6.dts"
 
 # if [ -f "$DTS_SOURCE" ]; then
-
+#
 #     mkdir -p target/linux/rockchip/dts/rk3568
 #     mkdir -p target/linux/rockchip/files/arch/arm64/boot/dts/rockchip
-
+#
 #     cp -f "$DTS_SOURCE" \
 #         target/linux/rockchip/dts/rk3568/rk3568-opc-h68k.dts
-
+#
 #     cp -f "$DTS_SOURCE" \
 #         target/linux/rockchip/files/arch/arm64/boot/dts/rockchip/rk3568-opc-h68k.dts
-
+#
 #     cp -f "$DTS_SOURCE" \
 #         target/linux/rockchip/files/arch/arm64/boot/dts/rockchip/rk3568-hinlink-opc-h68k.dts
-
+#
 #     echo "H68K DTS 已复制"
-
+#
 # else
-
+#
 #     echo "WARNING: 未找到 H68K DTS:"
 #     echo "$DTS_SOURCE"
-
+#
 # fi
-
 
 ###############################################################################
 # 5. 扫描 package/myapp 真正的 Package
@@ -261,7 +337,6 @@ else
 
 fi
 
-
 ###############################################################################
 # 6. 收集当前 .config 中实际启用的 Package
 ###############################################################################
@@ -285,7 +360,6 @@ if [ -f .config ]; then
 fi
 
 echo "当前启用的第三方/官方 Package 数量：$(printf '%s\n' "$CONFIG_PACKAGES" | sed '/^$/d' | wc -l)"
-
 
 ###############################################################################
 # 7. 独立第三方插件优先
@@ -352,7 +426,6 @@ for pkg in $MYAPP_PACKAGES; do
     done
 
 done
-
 
 ###############################################################################
 # 8. 第三方集合源优先 (THIRD_PARTY_FEEDS > OFFICIAL_FEEDS)
@@ -423,7 +496,6 @@ $pkg
 
 done
 
-
 ###############################################################################
 # 9. SmartDNS Rust Makefile 修复
 ###############################################################################
@@ -453,9 +525,8 @@ if [ -f package/myapp/smartdns/Makefile ]; then
 
 fi
 
-
 ###############################################################################
-# 10. 自动添加 LuCI 中文语言包 (移除了内部 make defconfig)
+# 10. 自动添加 LuCI 中文语言包
 ###############################################################################
 
 echo
@@ -495,7 +566,6 @@ if [ -f .config ]; then
 
 fi
 
-
 ###############################################################################
 # 11. conntrack 调优
 ###############################################################################
@@ -515,9 +585,8 @@ echo \
 
 echo "nf_conntrack_max = 655550"
 
-
 ###############################################################################
-# 12. Wi-Fi 首次启动自动开启（更稳健）
+# 12. Wi-Fi 首次启动自动开启
 ###############################################################################
 
 echo
@@ -532,7 +601,7 @@ cat > files/etc/uci-defaults/zz-enable-wifi <<'EOF'
 
 . /lib/functions.sh
 
-# 等待无线配置真正出现（最多约 30 秒，适配 ath11k / IPQ 晚加载）
+# 等待无线配置真正出现（最多约 30 秒）
 i=0
 while [ $i -lt 30 ]; do
     [ -s /etc/config/wireless ] && break
@@ -540,7 +609,7 @@ while [ $i -lt 30 ]; do
     i=$((i + 1))
 done
 
-# 仍不存在则强制生成一次
+# 仍不存在则尝试生成
 [ -s /etc/config/wireless ] || wifi config 2>/dev/null || true
 
 [ -s /etc/config/wireless ] || exit 0
@@ -553,13 +622,13 @@ enable_all()
     uci -q set "wireless.${cfg}.disabled=0"
 }
 
-# 同时处理 wifi-device 和 wifi-iface（兼容新旧 wifi-scripts）
+# 同时处理 wifi-device 和 wifi-iface
 config_foreach enable_all wifi-device
 config_foreach enable_all wifi-iface
 
 uci -q commit wireless
 
-# 真正拉起无线
+# 拉起无线
 wifi up 2>/dev/null || wifi 2>/dev/null || true
 
 exit 0
@@ -568,7 +637,6 @@ EOF
 chmod +x files/etc/uci-defaults/zz-enable-wifi
 
 echo "Wi-Fi 首次启动自动开启已设置（带等待 + wifi up）"
-
 
 ###############################################################################
 # 13. 最终来源检查
@@ -621,7 +689,6 @@ for pkg in $MYAPP_PACKAGES; do
 
 done
 
-
 ###############################################################################
 # 14. IPQ60xx 内核大小修改 + SKB Recycler
 ###############################################################################
@@ -630,7 +697,6 @@ echo
 echo "========================================"
 echo "修改 IPQ60xx 内核大小 / 开启 SKB Recycler"
 echo "========================================"
-
 
 ###############################################################################
 # 修改内核大小
@@ -665,7 +731,6 @@ set_kernel_size() {
     echo "IPQ60xx 内核大小修改完成"
 }
 
-
 ###############################################################################
 # 开启内存回收补丁
 ###############################################################################
@@ -692,7 +757,6 @@ EOF
     echo "CONFIG_KERNEL_SKB_RECYCLER_MULTI_CPU=y"
 }
 
-
 ###############################################################################
 # 执行内核修改
 ###############################################################################
@@ -704,7 +768,6 @@ if [ -f .config ]; then
 else
     echo "WARNING: .config 不存在，跳过 SKB Recycler 配置"
 fi
-
 
 ###############################################################################
 # 15. DIY2 完成
