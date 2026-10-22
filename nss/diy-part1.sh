@@ -20,13 +20,13 @@ https://github.com/immortalwrt/homeproxy.git \
 homeproxy
 
 # SmartDNS
-git clone -b master --depth 1 \
-https://github.com/pymumu/luci-app-smartdns.git \
-luci-app-smartdns
+#git clone -b master --depth 1 \
+#https://github.com/pymumu/luci-app-smartdns.git \
+#luci-app-smartdns
 
-git clone -b master --depth 1 \
-https://github.com/pymumu/smartdns.git \
-smartdns
+#git clone -b master --depth 1 \
+#https://github.com/pymumu/smartdns.git \
+#smartdns
 
 # MosDNS
 git clone -b v5 --depth 1 \
