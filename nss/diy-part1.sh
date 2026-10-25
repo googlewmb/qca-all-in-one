@@ -33,9 +33,9 @@ https://github.com/pymumu/luci-app-smartdns.git \
 luci-app-smartdns
 
 # MosDNS
-#git clone -b v5 --depth 1 \
-#https://github.com/sbwml/luci-app-mosdns.git \
-#mosdns
+git clone -b v5 --depth 1 \
+https://github.com/sbwml/luci-app-mosdns.git \
+mosdns
 
 # V2Ray GeoData
 #git clone --depth 1 \
