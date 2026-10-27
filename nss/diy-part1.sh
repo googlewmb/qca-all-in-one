@@ -1,3 +1,4 @@
+
 #!/bin/bash
 set -e
 #
@@ -146,6 +147,11 @@ echo 'src-git small https://github.com/kenzok8/small.git' >> feeds.conf.default
 
 # Modem
 # echo 'src-git modem https://github.com/FUjr/modem_feeds.git' >> feeds.conf.default
+
+# rtp2httpd - IPTV 流媒体转发服务
+# 包含主程序、LuCI 管理界面及相关 OpenWrt 软件包
+# 官方仓库：https://github.com/stackia/rtp2httpd
+echo 'src-git rtp2httpd https://github.com/stackia/rtp2httpd.git;main' >> feeds.conf.default
 
 echo "package/myapp:"
 find package/myapp \
