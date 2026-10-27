@@ -11,7 +11,7 @@
 CONFIG_MODULES=y
 CONFIG_HAVE_DOT_CONFIG=y
 CONFIG_HOST_OS_LINUX=y
-
+CONFIG_PACKAGE_luci-app-rtp2httpd=y
 CONFIG_DEFAULT_TARGET_qualcommax_ipq60xx=y
 CONFIG_TARGET_qualcommax=y
 CONFIG_TARGET_qualcommax_ipq60xx=y
