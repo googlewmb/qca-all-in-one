@@ -33,7 +33,7 @@ CONFIG_BPF_TOOLCHAIN_HOST=y
 # CONFIG_BPF_TOOLCHAIN_BUILD_LLVM is not set
 
 
-
+CONFIG_PACKAGE_luci-app-rtp2httpd=y
 
 CONFIG_PACKAGE_kmod-tcp-bbr=y
 
