@@ -1,9 +1,16 @@
-name: Openwrt_ipq-vikngyfy
+name: Openwrt_daede-Qualcomm-vikngyfy
 
 permissions: write-all
 
 on:
   workflow_dispatch:
+    inputs:
+      BUILD_CONFIG_ONLY:
+        description: '仅输出完整配置，不编译固件'
+        required: true
+        default: false
+        type: boolean
+
   schedule:
     - cron: "16 16 * * *"
 
@@ -11,9 +18,8 @@ env:
   OPENWRT_NAME: Openwrt
   REPO: googlewmb/qca-all-in-one
   REPO_URL: https://github.com/VIKINGYFY/immortalwrt
-  REPO_BRANCH: main
+  REPO_BRANCH: owrt
   CONFIG_FILE: nss/immortalwrt/.config
-  CONFIG_BUILD: nss/immortalwrt/ipq80x6.18.txt
   DIY_P1_SH: nss/diy-part1.sh
   DIY_P2_SH: nss/diy-part2.sh
   UPLOAD_BIN: true
@@ -23,6 +29,16 @@ env:
 
 jobs:
   build:
+    strategy:
+      matrix:
+        config:
+          - MT7986owrt.txt
+      fail-fast: false
+
+    env:
+      CONFIG_BUILD: nss/immortalwrt/${{ matrix.config }}
+      BUILD_CONFIG_ONLY: ${{ github.event.inputs.BUILD_CONFIG_ONLY || 'false' }}
+
     runs-on: ubuntu-latest
 
     steps:
@@ -60,7 +76,7 @@ jobs:
         sudo timedatectl set-timezone "$TZ"
         echo "date1=$(date +'%Y.%m.%d-%H.%M')" >> $GITHUB_ENV
         echo "date2=$(date +'%Y.%m.%d')" >> $GITHUB_ENV
-        echo "date3=$(date "+%Y年%m月%d日")" >> $GITHUB_ENV
+        echo "date3=$(date '+%Y年%m月%d日')" >> $GITHUB_ENV
 
     - name: 下载固件源码
       run: |
@@ -80,13 +96,47 @@ jobs:
 
     - name: 加载config 执行DIY_P2_SH defconfig
       run: |
-        [ -e "${{ env.CONFIG_BUILD }}" ] && mv "${{ env.CONFIG_BUILD }}" openwrt/.config
+        [ -e "${GITHUB_WORKSPACE}/${{ env.CONFIG_BUILD }}" ] && mv "${GITHUB_WORKSPACE}/${{ env.CONFIG_BUILD }}" openwrt/.config
         chmod +x "${GITHUB_WORKSPACE}/${{ env.DIY_P2_SH }}"
         cd openwrt
         "${GITHUB_WORKSPACE}/${{ env.DIY_P2_SH }}"
         make defconfig
 
+    - name: 仅输出完整配置
+      if: env.BUILD_CONFIG_ONLY == 'true'
+      working-directory: ./openwrt
+      run: |
+        echo "========================================"
+        echo "仅输出完整配置模式"
+        echo "========================================"
+        echo "当前配置: ${{ matrix.config }}"
+        echo
+
+        echo "========== 完整 .config =========="
+        cat .config
+        echo "========== 完整 .config 结束 =========="
+
+        mkdir -p config-output
+
+        cp .config \
+          "config-output/${{ matrix.config }}_${{ env.date1 }}_full.config"
+
+        echo
+        echo "========================================"
+        echo "配置文件已生成"
+        echo "========================================"
+
+        ls -lh config-output/
+
+    - name: 上传完整配置
+      if: env.BUILD_CONFIG_ONLY == 'true'
+      uses: actions/upload-artifact@main
+      with:
+        name: config_${{ env.OPENWRT_NAME }}_${{ matrix.config }}_${{ env.date1 }}
+        path: openwrt/config-output/*.config
+
     - name: 下载安装包
+      if: env.BUILD_CONFIG_ONLY != 'true'
       working-directory: ./openwrt
       run: |
         make download -j$(nproc)
@@ -95,12 +145,14 @@ jobs:
 
     - name: 编译固件
       id: compile
+      if: env.BUILD_CONFIG_ONLY != 'true'
       working-directory: ./openwrt
       run: |
         echo -e "$(nproc) thread compile"
         make -j$(nproc) || make -j1 || make -j1 V=s
 
     - name: 获取固件设备名字
+      if: env.BUILD_CONFIG_ONLY != 'true'
       working-directory: ./openwrt
       run: |
         grep '^CONFIG_TARGET_.*_DEVICE_.*=y' .config | sed -r 's/^CONFIG_TARGET_(.*)_DEVICE_(.*)=y/\1_\2/' | head -n1 > DEVICE_NAME
@@ -133,8 +185,6 @@ jobs:
 
         cd firmware
 
-        sudo apt-get install -y rename
-
         if [ -f config.buildinfo ]; then
           mv config.buildinfo \
           "${{ env.date1 }}_${{ env.OPENWRT_NAME }}_${{ env.DEVICE_NAME }}_config.buildinfo"
@@ -161,6 +211,7 @@ jobs:
       run: |
         touch release.txt
         echo "由衷感谢所有为openwrt无私奉献的大佬们" >> release.txt
+        echo "当前配置: ${{ matrix.config }}" >> release.txt
         echo "📥 固件下载" >> release.txt
 
     - name: 发布至release
@@ -168,8 +219,8 @@ jobs:
       uses: softprops/action-gh-release@master
       with:
         files: ${{ env.FIRMWARE }}/*
-        name: ${{ env.date3 }}
-        tag_name: ${{ env.date2 }}
+        name: ${{ env.date3 }}-${{ matrix.config }}
+        tag_name: ${{ env.date2 }}-${{ matrix.config }}
         body_path: release.txt
 
     - name: config文件上传自动更新1
@@ -184,14 +235,28 @@ jobs:
 
     - name: config文件上传自动更新3
       run: |
-        cp ./openwrt/.config "${GITHUB_WORKSPACE}/main/${{ env.CONFIG_FILE }}"
+        # 额外生成完整配置，绝不覆盖原始 .txt 种子文件
+        cp ./openwrt/.config \
+          "${GITHUB_WORKSPACE}/main/nss/immortalwrt/${{ matrix.config }}.full.config"
+
         cd $GITHUB_WORKSPACE/main
-        git add .
+        git add "nss/immortalwrt/${{ matrix.config }}.full.config"
+
         if git diff --cached --quiet; then
           echo "nothing to commit"
         else
-          git commit -am "update $(date '+%Y-%m-%d %H:%M:%S')"
-          git push --quiet "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ env.REPO }}.git" HEAD:main
+          git commit -m "add full config for ${{ matrix.config }} $(date '+%Y-%m-%d %H:%M:%S')"
+
+          # 并发推送重试（最多5次）
+          for i in 1 2 3 4 5; do
+            git pull --rebase origin main || true
+            if git push --quiet "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ env.REPO }}.git" HEAD:main; then
+              echo "push success"
+              break
+            fi
+            echo "push failed, retry $i ..."
+            sleep 10
+          done
         fi
 
     - name: 查看磁盘使用情况
