@@ -1,19 +1,25 @@
-name: Openwrt_ipq-nss
+name: Openwrt_MT7986OWRT
 
 permissions: write-all
 
 on:
   workflow_dispatch:
+    inputs:
+      BUILD_CONFIG_ONLY:
+        description: '仅输出完整配置，不编译固件'
+        required: true
+        default: false
+        type: boolean
+
   schedule:
     - cron: "16 16 * * *"
 
 env:
   OPENWRT_NAME: Openwrt
   REPO: googlewmb/qca-all-in-one
-  REPO_URL: https://github.com/LiBwrt/LibWrt
-  REPO_BRANCH: 25.12-nss
+  REPO_URL: https://github.com/chasey-dev/immortalwrt-mt798x-rebase
+  REPO_BRANCH: 25.12
   CONFIG_FILE: nss/immortalwrt/.config
-  CONFIG_BUILD: nss/immortalwrt/ipq80x.config
   DIY_P1_SH: nss/diy-part1.sh
   DIY_P2_SH: nss/diy-part2.sh
   UPLOAD_BIN: true
@@ -23,6 +29,16 @@ env:
 
 jobs:
   build:
+    strategy:
+      matrix:
+        config:
+          - MT7986-25.12.txt
+      fail-fast: false
+
+    env:
+      CONFIG_BUILD: nss/immortalwrt/${{ matrix.config }}
+      BUILD_CONFIG_ONLY: ${{ github.event.inputs.BUILD_CONFIG_ONLY || 'false' }}
+
     runs-on: ubuntu-latest
 
     steps:
@@ -60,7 +76,7 @@ jobs:
         sudo timedatectl set-timezone "$TZ"
         echo "date1=$(date +'%Y.%m.%d-%H.%M')" >> $GITHUB_ENV
         echo "date2=$(date +'%Y.%m.%d')" >> $GITHUB_ENV
-        echo "date3=$(date "+%Y年%m月%d日")" >> $GITHUB_ENV
+        echo "date3=$(date '+%Y年%m月%d日')" >> $GITHUB_ENV
 
     - name: 下载固件源码
       run: |
@@ -68,9 +84,9 @@ jobs:
 
     - name: 执行DIY_P1_SH
       run: |
-        chmod +x ${{ env.DIY_P1_SH }}
+        chmod +x "${GITHUB_WORKSPACE}/${{ env.DIY_P1_SH }}"
         cd openwrt
-        $GITHUB_WORKSPACE/${{ env.DIY_P1_SH }}
+        "${GITHUB_WORKSPACE}/${{ env.DIY_P1_SH }}"
 
     - name: 更新feeds
       working-directory: ./openwrt
@@ -80,64 +96,47 @@ jobs:
 
     - name: 加载config 执行DIY_P2_SH defconfig
       run: |
-        [ -e ${{ env.CONFIG_BUILD}} ] && mv ${{ env.CONFIG_BUILD}} openwrt/.config
-        chmod +x ${{ env.DIY_P2_SH }}
+        [ -e "${GITHUB_WORKSPACE}/${{ env.CONFIG_BUILD }}" ] && mv "${GITHUB_WORKSPACE}/${{ env.CONFIG_BUILD }}" openwrt/.config
+        chmod +x "${GITHUB_WORKSPACE}/${{ env.DIY_P2_SH }}"
         cd openwrt
-        $GITHUB_WORKSPACE/${{ env.DIY_P2_SH }}
+        "${GITHUB_WORKSPACE}/${{ env.DIY_P2_SH }}"
         make defconfig
 
-    - name: 修复首次启动无线默认开启
+    - name: 仅输出完整配置
+      if: env.BUILD_CONFIG_ONLY == 'true'
       working-directory: ./openwrt
       run: |
-        # LibWrt 25.12-nss 已默认开启无线；修复 DIY2 生成的首次启动脚本。
-        # 必须在 DIY2 之后执行，避免被旧脚本覆盖。
-        mkdir -p files/etc/uci-defaults
-        cat > files/etc/uci-defaults/zz-enable-wifi <<'EOF'
-        #!/bin/sh
-        . /lib/functions.sh
+        echo "========================================"
+        echo "仅输出完整配置模式"
+        echo "========================================"
+        echo "当前配置: ${{ matrix.config }}"
+        echo
 
-        count_radio() { radios=$((radios + 1)); }
-        count_iface() { ifaces=$((ifaces + 1)); }
-        enable_wifi() {
-            uci -q set "wireless.$1.disabled=0" || failed=1
-        }
+        echo "========== 完整 .config =========="
+        cat .config
+        echo "========== 完整 .config 结束 =========="
 
-        # 驱动可能尚未就绪；文件非空也不代表已生成无线设备配置。
-        # wifi config 只补充未配置的设备，保留已有 SSID、密码等设置。
-        attempt=0
-        while [ "$attempt" -lt 15 ]; do
-            if /sbin/wifi config; then
-                radios=0
-                ifaces=0
-                if config_load wireless; then
-                    config_foreach count_radio wifi-device
-                    config_foreach count_iface wifi-iface
-                    if [ "$radios" -gt 0 ] && [ "$ifaces" -gt 0 ]; then
-                        failed=0
-                        config_foreach enable_wifi wifi-device
-                        config_foreach enable_wifi wifi-iface
-                        [ "$failed" -eq 0 ] || exit 1
-                        uci -q commit wireless || exit 1
-                        # 该分支的 999_auto-restart.sh 已先启动 network。
-                        # commit 只保存配置，需让运行中的 netifd 重新加载。
-                        if ubus -t 5 call network get_proto_handlers >/dev/null 2>&1; then
-                            /sbin/wifi reload || exit 1
-                        fi
-                        exit 0
-                    fi
-                fi
-            fi
-            attempt=$((attempt + 1))
-            [ "$attempt" -ge 15 ] || sleep 2
-        done
+        mkdir -p config-output
 
-        logger -t wifi-defaults "Wireless configuration not ready; retry on next boot"
-        # 非零退出保留本脚本，下次启动继续尝试。
-        exit 1
-        EOF
-        chmod 0755 files/etc/uci-defaults/zz-enable-wifi
+        cp .config \
+          "config-output/${{ matrix.config }}_${{ env.date1 }}_full.config"
+
+        echo
+        echo "========================================"
+        echo "配置文件已生成"
+        echo "========================================"
+
+        ls -lh config-output/
+
+    - name: 上传完整配置
+      if: env.BUILD_CONFIG_ONLY == 'true'
+      uses: actions/upload-artifact@main
+      with:
+        name: config_${{ env.OPENWRT_NAME }}_${{ matrix.config }}_${{ env.date1 }}
+        path: openwrt/config-output/*.config
 
     - name: 下载安装包
+      if: env.BUILD_CONFIG_ONLY != 'true'
       working-directory: ./openwrt
       run: |
         make download -j$(nproc)
@@ -146,18 +145,18 @@ jobs:
 
     - name: 编译固件
       id: compile
+      if: env.BUILD_CONFIG_ONLY != 'true'
       working-directory: ./openwrt
       run: |
         echo -e "$(nproc) thread compile"
         make -j$(nproc) || make -j1 || make -j1 V=s
 
     - name: 获取固件设备名字
+      if: env.BUILD_CONFIG_ONLY != 'true'
       working-directory: ./openwrt
       run: |
-        DEVICE_NAME=$(grep '^CONFIG_TARGET_.*_DEVICE_.*=y' .config | sed -r 's/^CONFIG_TARGET_(.*)_DEVICE_(.*)=y/\1_\2/' | head -n 1)
-        if [ -n "$DEVICE_NAME" ]; then
-          echo "DEVICE_NAME=$DEVICE_NAME" >> "$GITHUB_ENV"
-        fi
+        grep '^CONFIG_TARGET_.*_DEVICE_.*=y' .config | sed -r 's/^CONFIG_TARGET_(.*)_DEVICE_(.*)=y/\1_\2/' | head -n1 > DEVICE_NAME
+        [ -s DEVICE_NAME ] && echo "DEVICE_NAME=$(cat DEVICE_NAME)" >> $GITHUB_ENV
 
     - name: 上传bin目录文件
       if: steps.compile.outcome == 'success' && env.UPLOAD_BIN == 'true'
@@ -186,8 +185,6 @@ jobs:
 
         cd firmware
 
-        sudo apt-get install -y rename
-
         if [ -f config.buildinfo ]; then
           mv config.buildinfo \
           "${{ env.date1 }}_${{ env.OPENWRT_NAME }}_${{ env.DEVICE_NAME }}_config.buildinfo"
@@ -214,6 +211,7 @@ jobs:
       run: |
         touch release.txt
         echo "由衷感谢所有为openwrt无私奉献的大佬们" >> release.txt
+        echo "当前配置: ${{ matrix.config }}" >> release.txt
         echo "📥 固件下载" >> release.txt
 
     - name: 发布至release
@@ -221,8 +219,8 @@ jobs:
       uses: softprops/action-gh-release@master
       with:
         files: ${{ env.FIRMWARE }}/*
-        name: ${{ env.date3 }}
-        tag_name: ${{ env.date2 }}
+        name: ${{ env.date3 }}-${{ matrix.config }}
+        tag_name: ${{ env.date2 }}-${{ matrix.config }}
         body_path: release.txt
 
     - name: config文件上传自动更新1
@@ -237,14 +235,28 @@ jobs:
 
     - name: config文件上传自动更新3
       run: |
-        cp ./openwrt/.config $GITHUB_WORKSPACE/main/${{ env.CONFIG_FILE }}
+        # 额外生成完整配置，绝不覆盖原始 .txt 种子文件
+        cp ./openwrt/.config \
+          "${GITHUB_WORKSPACE}/main/nss/immortalwrt/${{ matrix.config }}.full.config"
+
         cd $GITHUB_WORKSPACE/main
-        git add .
+        git add "nss/immortalwrt/${{ matrix.config }}.full.config"
+
         if git diff --cached --quiet; then
           echo "nothing to commit"
         else
-          git commit -am "update $(date '+%Y-%m-%d %H:%M:%S')"
-          git push --quiet "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ env.REPO }}.git" HEAD:main
+          git commit -m "add full config for ${{ matrix.config }} $(date '+%Y-%m-%d %H:%M:%S')"
+
+          # 并发推送重试（最多5次）
+          for i in 1 2 3 4 5; do
+            git pull --rebase origin main || true
+            if git push --quiet "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ env.REPO }}.git" HEAD:main; then
+              echo "push success"
+              break
+            fi
+            echo "push failed, retry $i ..."
+            sleep 10
+          done
         fi
 
     - name: 查看磁盘使用情况
