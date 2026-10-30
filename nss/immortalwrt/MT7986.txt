@@ -2,7 +2,7 @@
 #
 # ============================================================
 # MediaTek Filogic / MT7986 配置
-# 多设备固件配置
+# 设备：Supergateway S20P
 # ============================================================
 #
 
@@ -21,39 +21,52 @@ CONFIG_TARGET_ROOTFS_INITRAMFS=n
 # 2. 设备列表
 # ============================================================
 
-CONFIG_TARGET_DEVICE_mediatek_filogic_DEVICE_asus_tuf-ax4200=y
-CONFIG_TARGET_DEVICE_mediatek_filogic_DEVICE_asus_tuf-ax6000=y
-CONFIG_TARGET_DEVICE_mediatek_filogic_DEVICE_glinet_gl-mt6000=y
-CONFIG_TARGET_DEVICE_mediatek_filogic_DEVICE_jdcloud_re-cp-03=y
-CONFIG_TARGET_DEVICE_mediatek_filogic_DEVICE_netcore_n60=y
-CONFIG_TARGET_DEVICE_mediatek_filogic_DEVICE_netcore_n60-pro=y
+# ASUS
+# CONFIG_TARGET_DEVICE_mediatek_filogic_DEVICE_asus_tuf-ax4200 is not set
+# CONFIG_TARGET_DEVICE_mediatek_filogic_DEVICE_asus_tuf-ax6000 is not set
 
-CONFIG_TARGET_DEVICE_mediatek_filogic_DEVICE_ruijie_ew-6000gx-pro=y
-CONFIG_TARGET_DEVICE_mediatek_filogic_DEVICE_ruijie_ew-6000gx-pro-expand=y
-CONFIG_TARGET_DEVICE_mediatek_filogic_DEVICE_ruijie_ew-6000gx-pro-stock=y
-CONFIG_TARGET_DEVICE_mediatek_filogic_DEVICE_ruijie_ew-6000gx-pro-ubootmod=y
+# GL.iNet
+# CONFIG_TARGET_DEVICE_mediatek_filogic_DEVICE_glinet_gl-mt6000 is not set
 
-CONFIG_TARGET_DEVICE_mediatek_filogic_DEVICE_ruijie_rg-x60-new=y
-CONFIG_TARGET_DEVICE_mediatek_filogic_DEVICE_ruijie_rg-x60-new-expand=y
-CONFIG_TARGET_DEVICE_mediatek_filogic_DEVICE_ruijie_rg-x60-new-stock=y
-CONFIG_TARGET_DEVICE_mediatek_filogic_DEVICE_ruijie_rg-x60-new-ubootmod=y
-CONFIG_TARGET_DEVICE_mediatek_filogic_DEVICE_ruijie_rg-x60-pro=y
-CONFIG_TARGET_DEVICE_mediatek_filogic_DEVICE_ruijie_rg-x60-pro-107m=y
+# JD Cloud
+# CONFIG_TARGET_DEVICE_mediatek_filogic_DEVICE_jdcloud_re-cp-03 is not set
 
-CONFIG_TARGET_DEVICE_mediatek_filogic_DEVICE_supergateway_s20l=y
-CONFIG_TARGET_DEVICE_mediatek_filogic_DEVICE_supergateway_s20m=y
+# Netcore
+# CONFIG_TARGET_DEVICE_mediatek_filogic_DEVICE_netcore_n60 is not set
+# CONFIG_TARGET_DEVICE_mediatek_filogic_DEVICE_netcore_n60-pro is not set
+
+# Ruijie EW-6000GX-PRO
+# CONFIG_TARGET_DEVICE_mediatek_filogic_DEVICE_ruijie_ew-6000gx-pro is not set
+# CONFIG_TARGET_DEVICE_mediatek_filogic_DEVICE_ruijie_ew-6000gx-pro-expand is not set
+# CONFIG_TARGET_DEVICE_mediatek_filogic_DEVICE_ruijie_ew-6000gx-pro-stock is not set
+# CONFIG_TARGET_DEVICE_mediatek_filogic_DEVICE_ruijie_ew-6000gx-pro-ubootmod is not set
+
+# Ruijie RG-X60
+# CONFIG_TARGET_DEVICE_mediatek_filogic_DEVICE_ruijie_rg-x60-new is not set
+# CONFIG_TARGET_DEVICE_mediatek_filogic_DEVICE_ruijie_rg-x60-new-expand is not set
+# CONFIG_TARGET_DEVICE_mediatek_filogic_DEVICE_ruijie_rg-x60-new-stock is not set
+# CONFIG_TARGET_DEVICE_mediatek_filogic_DEVICE_ruijie_rg-x60-new-ubootmod is not set
+# CONFIG_TARGET_DEVICE_mediatek_filogic_DEVICE_ruijie_rg-x60-pro is not set
+# CONFIG_TARGET_DEVICE_mediatek_filogic_DEVICE_ruijie_rg-x60-pro-107m is not set
+
+# Supergateway
+# CONFIG_TARGET_DEVICE_mediatek_filogic_DEVICE_supergateway_s20l is not set
+# CONFIG_TARGET_DEVICE_mediatek_filogic_DEVICE_supergateway_s20m is not set
 CONFIG_TARGET_DEVICE_mediatek_filogic_DEVICE_supergateway_s20p=y
 
-CONFIG_TARGET_DEVICE_mediatek_filogic_DEVICE_tplink_tl-xdr4288=y
-CONFIG_TARGET_DEVICE_mediatek_filogic_DEVICE_tplink_tl-xdr6086=y
-CONFIG_TARGET_DEVICE_mediatek_filogic_DEVICE_tplink_tl-xdr6088=y
-CONFIG_TARGET_DEVICE_mediatek_filogic_DEVICE_tplink_tl-xtr8488=y
+# TP-Link
+# CONFIG_TARGET_DEVICE_mediatek_filogic_DEVICE_tplink_tl-xdr4288 is not set
+# CONFIG_TARGET_DEVICE_mediatek_filogic_DEVICE_tplink_tl-xdr6086 is not set
+# CONFIG_TARGET_DEVICE_mediatek_filogic_DEVICE_tplink_tl-xdr6088 is not set
+# CONFIG_TARGET_DEVICE_mediatek_filogic_DEVICE_tplink_tl-xtr8488 is not set
 
-CONFIG_TARGET_DEVICE_mediatek_filogic_DEVICE_xiaomi_redmi-router-ax6000-stock=y
-CONFIG_TARGET_DEVICE_mediatek_filogic_DEVICE_xiaomi_redmi-router-ax6000-ubootmod=y
+# Xiaomi
+# CONFIG_TARGET_DEVICE_mediatek_filogic_DEVICE_xiaomi_redmi-router-ax6000-stock is not set
+# CONFIG_TARGET_DEVICE_mediatek_filogic_DEVICE_xiaomi_redmi-router-ax6000-ubootmod is not set
 
-CONFIG_TARGET_DEVICE_mediatek_filogic_DEVICE_yvr_x6=y
-CONFIG_TARGET_DEVICE_mediatek_filogic_DEVICE_zyxel_ex5700-telenor=y
+# Other
+# CONFIG_TARGET_DEVICE_mediatek_filogic_DEVICE_yvr_x6 is not set
+# CONFIG_TARGET_DEVICE_mediatek_filogic_DEVICE_zyxel_ex5700-telenor is not set
 
 # ============================================================
 # 3. MT7986 必选组件
