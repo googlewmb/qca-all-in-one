@@ -32,10 +32,7 @@ jobs:
     strategy:
       matrix:
         config:
-          - ipq60x.txt
-          - ipq80x.txt
-          - ipq80x-no-usb.txt
-          - myipq80x.txt
+          - MT7986.txt
       fail-fast: false
 
     env:
