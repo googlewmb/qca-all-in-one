@@ -15,6 +15,31 @@ CONFIG_PACKAGE_automount=y
 CONFIG_PACKAGE_autosamba=y
 
 
+# 集成daede后端内核
+CONFIG_PACKAGE_dae=y
+CONFIG_PACKAGE_daed=y
+# daed
+CONFIG_PACKAGE_luci-app-daede=y
+CONFIG_PACKAGE_kmod-veth=y
+
+CONFIG_DEVEL=y
+CONFIG_KERNEL_DEBUG_INFO=y
+CONFIG_KERNEL_DEBUG_INFO_REDUCED=n
+CONFIG_KERNEL_DEBUG_INFO_BTF=y
+CONFIG_KERNEL_CGROUPS=y
+CONFIG_KERNEL_CGROUP_BPF=y
+CONFIG_KERNEL_BPF_EVENTS=y
+CONFIG_BPF_TOOLCHAIN_HOST=y
+CONFIG_KERNEL_XDP_SOCKETS=y
+CONFIG_PACKAGE_kmod-xdp-sockets-diag=y
+
+CONFIG_PACKAGE_kmod-sched-core=y
+CONFIG_PACKAGE_kmod-sched-bpf=y
+
+
+
+
+
 
 # MT7986 closed-source WiFi and hardware acceleration
 CONFIG_PACKAGE_kmod-conninfra=y
