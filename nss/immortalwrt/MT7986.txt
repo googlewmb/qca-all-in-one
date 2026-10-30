@@ -17,6 +17,12 @@ CONFIG_TARGET_MULTI_PROFILE=y
 CONFIG_TARGET_PER_DEVICE_ROOTFS=y
 CONFIG_TARGET_ROOTFS_INITRAMFS=n
 
+
+
+CONFIG_PACKAGE_automount=y
+CONFIG_PACKAGE_autosamba=y
+
+
 # ============================================================
 # 2. 设备列表
 # ============================================================
