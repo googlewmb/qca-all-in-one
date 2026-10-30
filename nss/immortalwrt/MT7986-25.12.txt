@@ -10,6 +10,12 @@ CONFIG_FEED_video=n
 # S20P AX6000 device profile
 CONFIG_TARGET_DEVICE_mediatek_filogic_DEVICE_clx_s20p=y
 
+
+CONFIG_PACKAGE_automount=y
+CONFIG_PACKAGE_autosamba=y
+
+
+
 # MT7986 closed-source WiFi and hardware acceleration
 CONFIG_PACKAGE_kmod-conninfra=y
 CONFIG_PACKAGE_kmod-ifb=y
