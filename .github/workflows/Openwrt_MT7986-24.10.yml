@@ -32,7 +32,7 @@ jobs:
     strategy:
       matrix:
         config:
-          - MT7986.txt
+          - MT7986-24.10.txt
       fail-fast: false
 
     env:
