@@ -32,7 +32,7 @@ jobs:
     strategy:
       matrix:
         config:
-          - MT7986owrt.txt
+          - MT7986-owrt.txt
       fail-fast: false
 
     env:
