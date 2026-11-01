@@ -5,7 +5,7 @@ name: Auto-Clean
 on:
   workflow_dispatch:
   schedule:
-    - cron: "16 16 * * *"
+    - cron: "16 13 * * *"
 
 permissions: write-all
 
