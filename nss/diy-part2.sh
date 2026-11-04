@@ -231,8 +231,12 @@ done
 # 2.4 dae / daed 核心强制使用 kenzok8/small
 #
 # 指定来源：
-#   dae  -> package/feeds/small/dae
-#   daed -> package/feeds/small/daed
+#   dae  -> feeds/small/dae
+#   daed -> feeds/small/daed
+#
+# 关键修复：
+#   feeds install -a 不会默认覆盖核心包。
+#   必须使用 -f 强制安装，并使用 -p small 指定来源。
 #
 # 不允许其他第三方 feeds 或官方 feeds 覆盖。
 # luci-app-daede 不在本段强制修改范围内。
@@ -248,6 +252,15 @@ dae
 daed
 "
 
+echo
+echo "强制从 small feed 安装 dae / daed..."
+
+if ! ./scripts/feeds install -f -p small dae daed; then
+    echo "ERROR: 无法从 small feed 强制安装 dae / daed"
+    echo "请检查 feeds/small 中的软件包索引及 Makefile"
+    exit 1
+fi
+
 for pkg in $DAE_CORE_PACKAGES; do
 
     SMALL_DIR="package/feeds/small/${pkg}"
@@ -259,7 +272,6 @@ for pkg in $DAE_CORE_PACKAGES; do
     if [ ! -f "$SMALL_MAKEFILE" ]; then
         echo "ERROR: small feed 中不存在 ${pkg}"
         echo "检查路径: ${SMALL_MAKEFILE}"
-        echo "请检查 DIY1 是否成功添加并安装 small feed"
         exit 1
     fi
 
@@ -268,13 +280,24 @@ for pkg in $DAE_CORE_PACKAGES; do
     echo "指定来源: small/${pkg}"
     echo "软件包版本: ${SMALL_VERSION}"
 
+    # 检查实际链接目标，防止入口指向其他源码
+    SMALL_REAL="$(readlink -f "$SMALL_DIR" 2>/dev/null || true)"
+    FEED_REAL="$(readlink -f "feeds/small/${pkg}" 2>/dev/null || true)"
+
+    if [ -z "$SMALL_REAL" ] || [ "$SMALL_REAL" != "$FEED_REAL" ]; then
+        echo "ERROR: ${pkg} 并未正确指向 feeds/small"
+        echo "package/feeds 路径: ${SMALL_REAL}"
+        echo "feeds/small 路径: ${FEED_REAL}"
+        exit 1
+    fi
+
     # 检查 package/myapp 是否存在同名核心包
     if [ -d "package/myapp" ]; then
 
         if grep -rqE \
             "^[[:space:]]*define[[:space:]]+Package/${pkg}([[:space:]]|$)" \
-            package/myapp \
-            --include=Makefile 2>/dev/null; then
+            --include=Makefile \
+            package/myapp 2>/dev/null; then
 
             echo "ERROR: package/myapp 中发现同名核心包 ${pkg}"
             echo "small 和 package/myapp 存在重复定义风险"
@@ -307,7 +330,7 @@ for pkg in $DAE_CORE_PACKAGES; do
 
     done
 
-    # 最终确认
+    # 最终确认 small 来源
     if [ ! -f "package/feeds/small/${pkg}/Makefile" ]; then
         echo "ERROR: ${pkg} 未能锁定 small 来源"
         exit 1
@@ -814,10 +837,19 @@ echo "========================================"
 
 for pkg in dae daed; do
 
-    SMALL_MAKEFILE="package/feeds/small/${pkg}/Makefile"
+    SMALL_DIR="package/feeds/small/${pkg}"
+    SMALL_MAKEFILE="${SMALL_DIR}/Makefile"
 
     if [ ! -f "$SMALL_MAKEFILE" ]; then
         echo "ERROR: ${pkg} small 来源丢失"
+        exit 1
+    fi
+
+    SMALL_REAL="$(readlink -f "$SMALL_DIR" 2>/dev/null || true)"
+    FEED_REAL="$(readlink -f "feeds/small/${pkg}" 2>/dev/null || true)"
+
+    if [ -z "$SMALL_REAL" ] || [ "$SMALL_REAL" != "$FEED_REAL" ]; then
+        echo "ERROR: ${pkg} 来源不是 small"
         exit 1
     fi
 
@@ -825,7 +857,21 @@ for pkg in dae daed; do
     echo "  来源: package/feeds/small/${pkg}"
     echo "  版本: $(get_package_version "$SMALL_MAKEFILE")"
 
+    # 确认其他 feeds 没有重复入口
+    for feed in $THIRD_PARTY_FEEDS $OFFICIAL_FEEDS; do
+
+        [ "$feed" = "small" ] && continue
+
+        if package_entry_exists "$feed" "$pkg"; then
+            echo "ERROR: 发现其他 feed 重复入口: ${feed}/${pkg}"
+            exit 1
+        fi
+
+    done
+
 done
+
+echo "dae / daed 最终来源验证通过"
 
 ###############################################################################
 # 13. IPQ60xx 内核大小修改 + SKB Recycler
