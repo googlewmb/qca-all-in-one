@@ -140,7 +140,7 @@ get_package_version()
 
     [ -f "$makefile" ] || {
         echo "unknown"
-        return
+        return 0
     }
 
     version="$(
@@ -246,6 +246,54 @@ fi
 
 
 ###############################################################################
+# 5.1 特殊识别 VIKINGYFY UPnP
+#
+# DIY1 下载的源码：
+#   package/myapp/luci-app-upnp
+#   package/myapp/miniupnpd
+#
+# luci-app-upnp 使用 luci.mk，普通 define Package 扫描可能漏掉。
+# miniupnpd 生成多个变体，必须按源码目录名识别。
+###############################################################################
+
+echo
+echo "========================================"
+echo "识别 VIKINGYFY UPnP 独立源码"
+echo "========================================"
+
+VIKINGYFY_UPNP_PACKAGES="
+luci-app-upnp
+miniupnpd
+"
+
+for pkg in $VIKINGYFY_UPNP_PACKAGES; do
+
+    MYAPP_MAKEFILE="package/myapp/${pkg}/Makefile"
+
+    if [ ! -f "$MYAPP_MAKEFILE" ]; then
+        echo "ERROR: DIY1 未下载 UPnP 源码：$MYAPP_MAKEFILE"
+        exit 1
+    fi
+
+    case "
+$MYAPP_PACKAGES
+" in
+        *"
+$pkg
+"*)
+            echo "已识别: $pkg"
+            ;;
+        *)
+            MYAPP_PACKAGES="$MYAPP_PACKAGES
+$pkg"
+            echo "补充识别: $pkg"
+            ;;
+    esac
+
+done
+
+
+###############################################################################
 # 6. 收集当前 .config 中实际启用的 Package
 ###############################################################################
 
@@ -272,6 +320,9 @@ echo "当前启用的第三方/官方 Package 数量：$(printf '%s\n' "$CONFIG_
 
 ###############################################################################
 # 7. 独立第三方插件优先
+#
+# 优先级：
+# package/myapp > 第三方集合源 > 官方 feeds
 ###############################################################################
 
 echo
@@ -288,12 +339,13 @@ for pkg in $MYAPP_PACKAGES; do
 
     MYAPP_MAKEFILE=""
 
+    # 优先寻找真正定义 Package/${pkg} 的 Makefile
     while IFS= read -r -d '' mf; do
 
         [ -f "$mf" ] || continue
 
         if grep -q \
-            "^[[:space:]]*define[[:space:]]\+Package/${pkg}[[:space:]]*$" \
+            "^[[:space:]]*define[[:space:]]*Package/${pkg}[[:space:]]*$" \
             "$mf" 2>/dev/null; then
 
             MYAPP_MAKEFILE="$mf"
@@ -308,13 +360,24 @@ for pkg in $MYAPP_PACKAGES; do
             -print0 2>/dev/null || true
     )
 
+    # luci.mk 类型和多变体软件包回退到源码目录 Makefile
+    if [ -z "$MYAPP_MAKEFILE" ] &&
+       [ -f "package/myapp/${pkg}/Makefile" ]; then
+
+        MYAPP_MAKEFILE="package/myapp/${pkg}/Makefile"
+
+    fi
+
     if [ -n "$MYAPP_MAKEFILE" ]; then
         MYAPP_VERSION="$(get_package_version "$MYAPP_MAKEFILE")"
         echo "package/myapp 版本: $MYAPP_VERSION"
     else
         MYAPP_VERSION="unknown"
+        echo "WARNING: 未找到 package/myapp 对应 Makefile"
     fi
 
+    # 删除所有重复 feed 入口
+    # 保留 package/myapp 独立源码
     for feed in $THIRD_PARTY_FEEDS $OFFICIAL_FEEDS; do
 
         if package_entry_exists "$feed" "$pkg"; then
@@ -573,12 +636,13 @@ for pkg in $MYAPP_PACKAGES; do
 
         FOUND_MYAPP=""
 
+        # 优先检查实际 Package 定义
         while IFS= read -r -d '' mf; do
 
             [ -f "$mf" ] || continue
 
             if grep -q \
-                "^[[:space:]]*define[[:space:]]\+Package/${pkg}[[:space:]]*$" \
+                "^[[:space:]]*define[[:space:]]*Package/${pkg}[[:space:]]*$" \
                 "$mf" 2>/dev/null; then
 
                 FOUND_MYAPP="$mf"
@@ -593,16 +657,76 @@ for pkg in $MYAPP_PACKAGES; do
                 -print0 2>/dev/null || true
         )
 
+        # luci.mk 类型和多变体包回退到源码目录 Makefile
+        if [ -z "$FOUND_MYAPP" ] &&
+           [ -f "package/myapp/${pkg}/Makefile" ]; then
+
+            FOUND_MYAPP="package/myapp/${pkg}/Makefile"
+
+        fi
+
         if [ -n "$FOUND_MYAPP" ]; then
 
             echo "  package/myapp"
+            echo "  Makefile: $FOUND_MYAPP"
             echo "  version: $(get_package_version "$FOUND_MYAPP")"
+
+        else
+
+            echo "  WARNING: 未找到对应的独立源码 Makefile"
 
         fi
 
     fi
 
 done
+
+
+###############################################################################
+# 13.1 VIKINGYFY UPnP 最终检查
+###############################################################################
+
+echo
+echo "========================================"
+echo "VIKINGYFY UPnP 最终检查"
+echo "========================================"
+
+for pkg in $VIKINGYFY_UPNP_PACKAGES; do
+
+    echo
+    echo "检查: $pkg"
+
+    MYAPP_MAKEFILE="package/myapp/${pkg}/Makefile"
+
+    if [ ! -f "$MYAPP_MAKEFILE" ]; then
+        echo "ERROR: VIKINGYFY 源码不存在: $MYAPP_MAKEFILE"
+        exit 1
+    fi
+
+    echo "源码: $MYAPP_MAKEFILE"
+    echo "版本: $(get_package_version "$MYAPP_MAKEFILE")"
+
+    REMAINING=""
+
+    for feed in $THIRD_PARTY_FEEDS $OFFICIAL_FEEDS; do
+
+        if package_entry_exists "$feed" "$pkg"; then
+            REMAINING="$REMAINING ${feed}/${pkg}"
+        fi
+
+    done
+
+    if [ -n "$REMAINING" ]; then
+        echo "ERROR: 仍存在重复 feed 入口:$REMAINING"
+        exit 1
+    fi
+
+    echo "重复 feed 入口检查通过"
+
+done
+
+echo
+echo "VIKINGYFY UPnP 独立源码优先检查通过"
 
 
 ###############################################################################
