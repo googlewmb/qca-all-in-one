@@ -2,10 +2,16 @@
 #
 # 第三方插件 / 依赖 / 来源优先级处理
 #
-# 来源优先级：
+# 常规来源优先级：
 #   1. package/myapp 独立第三方源码
 #   2. DIY1 添加的第三方集合源
-#   3. 完整 daede 内核依赖
+#   3. 官方 feeds
+#
+# dae / daed 特殊指定：
+#   1. kenzok8/small
+#   2. 不允许其他 feeds 覆盖
+#
+# 其他配置保持原样
 #
 
 set -e
@@ -116,16 +122,51 @@ is_enabled()
 }
 
 ###############################################################################
-# 2.1 VIKINGYFY UPnP 独立源码优先
+# 2.1 获取包版本函数
+#
+# 修复原脚本函数定义晚于首次调用的问题
+###############################################################################
+
+get_package_version()
+{
+    local makefile="$1"
+    local version=""
+
+    [ -f "$makefile" ] || {
+        echo "unknown"
+        return
+    }
+
+    version="$(
+        sed -nE \
+            's/^[[:space:]]*PKG_VERSION[[:space:]]*:?=[[:space:]]*(.*)$/\1/p' \
+            "$makefile" |
+        head -n 1
+    )"
+
+    if [ -z "$version" ]; then
+        version="$(
+            sed -nE \
+                's/^[[:space:]]*PKG_RELEASE[[:space:]]*:?=[[:space:]]*(.*)$/release-\1/p' \
+                "$makefile" |
+            head -n 1
+        )"
+    fi
+
+    [ -n "$version" ] || version="unknown"
+
+    echo "$version"
+}
+
+###############################################################################
+# 2.2 VIKINGYFY UPnP 独立源码优先
 #
 # DIY1 已将以下两个软件包放入 package/myapp：
 #   package/myapp/luci-app-upnp
 #   package/myapp/miniupnpd
 #
-# luci-app-upnp 使用 luci.mk，不一定存在 define Package/luci-app-upnp。
-# miniupnpd 会生成 iptables / nftables 变体，源码目录仍然叫 miniupnpd。
-#
-# 因此这里按源码目录名清理 feed 入口，避免漏掉重复来源。
+# luci-app-upnp 使用 luci.mk
+# miniupnpd 会生成 iptables / nftables 变体
 ###############################################################################
 
 echo
@@ -171,54 +212,116 @@ for pkg in $VIKINGYFY_UPNP_PACKAGES; do
 done
 
 ###############################################################################
-# 2.2 明确要求移除的官方依赖入口
+# 2.3 明确要求移除的官方依赖入口
 ###############################################################################
 
 for pkg in $REMOVE_OFFICIAL_DEPS; do
+
     [ -n "$pkg" ] || continue
+
     echo "明确要求：移除官方依赖入口 -> $pkg"
+
     for official_feed in $OFFICIAL_FEEDS; do
         remove_package_entry "$official_feed" "$pkg"
     done
+
 done
 
 ###############################################################################
-# 3. 获取包版本函数定义
+# 2.4 dae / daed 核心强制使用 kenzok8/small
+#
+# 指定来源：
+#   dae  -> package/feeds/small/dae
+#   daed -> package/feeds/small/daed
+#
+# 不允许其他第三方 feeds 或官方 feeds 覆盖。
+# luci-app-daede 不在本段强制修改范围内。
 ###############################################################################
 
-get_package_version()
-{
-    local makefile="$1"
-    local version=""
+echo
+echo "========================================"
+echo "锁定 dae / daed 核心来源：kenzok8/small"
+echo "========================================"
 
-    [ -f "$makefile" ] || {
-        echo "unknown"
-        return
-    }
+DAE_CORE_PACKAGES="
+dae
+daed
+"
 
-    version="$(
-        sed -nE \
-            's/^[[:space:]]*PKG_VERSION[[:space:]]*:?=[[:space:]]*(.*)$/\1/p' \
-            "$makefile" |
-        head -n 1
-    )"
+for pkg in $DAE_CORE_PACKAGES; do
 
-    if [ -z "$version" ]; then
-        version="$(
-            sed -nE \
-                's/^[[:space:]]*PKG_RELEASE[[:space:]]*:?=[[:space:]]*(.*)$/release-\1/p' \
-                "$makefile" |
-            head -n 1
-        )"
+    SMALL_DIR="package/feeds/small/${pkg}"
+    SMALL_MAKEFILE="${SMALL_DIR}/Makefile"
+
+    echo
+    echo "检查核心软件包: ${pkg}"
+
+    if [ ! -f "$SMALL_MAKEFILE" ]; then
+        echo "ERROR: small feed 中不存在 ${pkg}"
+        echo "检查路径: ${SMALL_MAKEFILE}"
+        echo "请检查 DIY1 是否成功添加并安装 small feed"
+        exit 1
     fi
 
-    [ -n "$version" ] || version="unknown"
+    SMALL_VERSION="$(get_package_version "$SMALL_MAKEFILE")"
 
-    echo "$version"
-}
+    echo "指定来源: small/${pkg}"
+    echo "软件包版本: ${SMALL_VERSION}"
+
+    # 检查 package/myapp 是否存在同名核心包
+    if [ -d "package/myapp" ]; then
+
+        if grep -rqE \
+            "^[[:space:]]*define[[:space:]]+Package/${pkg}([[:space:]]|$)" \
+            package/myapp \
+            --include=Makefile 2>/dev/null; then
+
+            echo "ERROR: package/myapp 中发现同名核心包 ${pkg}"
+            echo "small 和 package/myapp 存在重复定义风险"
+            echo "请在 DIY1 中取消添加该核心包"
+            exit 1
+
+        fi
+
+    fi
+
+    # 删除其他第三方 feeds 和官方 feeds 的重复入口
+    for feed in $THIRD_PARTY_FEEDS $OFFICIAL_FEEDS; do
+
+        [ "$feed" = "small" ] && continue
+
+        if package_entry_exists "$feed" "$pkg"; then
+
+            MAKEFILE="$(package_makefile "$feed" "$pkg")"
+            VERSION="$(get_package_version "$MAKEFILE")"
+
+            echo "发现重复来源:"
+            echo "  ${feed}/${pkg}"
+            echo "  版本: ${VERSION}"
+
+            echo "删除重复入口，保留 small/${pkg}"
+
+            remove_package_entry "$feed" "$pkg"
+
+        fi
+
+    done
+
+    # 最终确认
+    if [ ! -f "package/feeds/small/${pkg}/Makefile" ]; then
+        echo "ERROR: ${pkg} 未能锁定 small 来源"
+        exit 1
+    fi
+
+    echo "✓ ${pkg} 最终来源: package/feeds/small/${pkg}"
+
+done
+
+echo
+echo "dae / daed 核心来源锁定完成"
 
 ###############################################################################
-# 4. H68K DTS 处理
+# 3. H68K DTS 处理
 ###############################################################################
 
 # echo
@@ -252,7 +355,7 @@ get_package_version()
 # fi
 
 ###############################################################################
-# 5. 扫描 package/myapp 真正的 Package
+# 4. 扫描 package/myapp 真正的 Package
 ###############################################################################
 
 echo
@@ -296,11 +399,7 @@ else
 fi
 
 ###############################################################################
-# 5.1 补充识别 luci.mk 类型和多变体软件包
-#
-# luci-app-upnp 使用 luci.mk，扫描 define Package 的方式可能识别不到。
-# miniupnpd 是源码目录名，其 Makefile 生成多个实际安装包变体。
-# 这里把源码目录名加入优先级清单。
+# 4.1 补充识别 luci.mk 类型和多变体软件包
 ###############################################################################
 
 for pkg in $VIKINGYFY_UPNP_PACKAGES; do
@@ -326,7 +425,7 @@ $pkg"
 done
 
 ###############################################################################
-# 6. 收集当前 .config 中实际启用的 Package
+# 5. 收集当前 .config 中实际启用的 Package
 ###############################################################################
 
 echo
@@ -350,7 +449,7 @@ fi
 echo "当前启用的第三方/官方 Package 数量：$(printf '%s\n' "$CONFIG_PACKAGES" | sed '/^$/d' | wc -l)"
 
 ###############################################################################
-# 7. 独立第三方插件优先
+# 6. 独立第三方插件优先
 ###############################################################################
 
 echo
@@ -367,7 +466,6 @@ for pkg in $MYAPP_PACKAGES; do
 
     MYAPP_MAKEFILE=""
 
-    # 优先寻找真正定义 Package/${pkg} 的 Makefile
     while IFS= read -r -d '' mf; do
 
         [ -f "$mf" ] || continue
@@ -388,7 +486,6 @@ for pkg in $MYAPP_PACKAGES; do
             -print0 2>/dev/null || true
     )
 
-    # 对 luci.mk 类型及多变体软件包，回退到源码目录 Makefile
     if [ -z "$MYAPP_MAKEFILE" ] &&
        [ -f "package/myapp/${pkg}/Makefile" ]; then
 
@@ -425,7 +522,7 @@ for pkg in $MYAPP_PACKAGES; do
 done
 
 ###############################################################################
-# 8. 第三方集合源优先 (THIRD_PARTY_FEEDS > OFFICIAL_FEEDS)
+# 7. 第三方集合源优先 (THIRD_PARTY_FEEDS > OFFICIAL_FEEDS)
 ###############################################################################
 
 echo
@@ -436,6 +533,14 @@ echo "========================================"
 for pkg in $CONFIG_PACKAGES; do
 
     [ -n "$pkg" ] || continue
+
+    # dae / daed 使用 small 专属来源，不参与普通优先级处理
+    case "$pkg" in
+        dae|daed)
+            echo "跳过普通来源处理: $pkg（已锁定 small）"
+            continue
+            ;;
+    esac
 
     case "
 $MYAPP_PACKAGES
@@ -494,7 +599,7 @@ $pkg
 done
 
 ###############################################################################
-# 9. SmartDNS Rust Makefile 修复
+# 8. SmartDNS Rust Makefile 修复
 ###############################################################################
 
 echo
@@ -523,7 +628,7 @@ if [ -f package/myapp/smartdns/Makefile ]; then
 fi
 
 ###############################################################################
-# 10. 自动添加 LuCI 中文语言包
+# 9. 自动添加 LuCI 中文语言包
 ###############################################################################
 
 echo
@@ -564,7 +669,7 @@ if [ -f .config ]; then
 fi
 
 ###############################################################################
-# 11. conntrack 调优
+# 10. conntrack 调优
 ###############################################################################
 
 echo
@@ -583,7 +688,7 @@ echo \
 echo "nf_conntrack_max = 655550"
 
 ###############################################################################
-# 12. Wi-Fi 首次启动自动开启
+# 11. Wi-Fi 首次启动自动开启
 ###############################################################################
 
 echo
@@ -636,7 +741,7 @@ chmod +x files/etc/uci-defaults/zz-enable-wifi
 echo "Wi-Fi 首次启动自动开启已设置（带等待 + wifi up）"
 
 ###############################################################################
-# 13. 最终来源检查
+# 12. 最终来源检查
 ###############################################################################
 
 echo
@@ -655,7 +760,6 @@ for pkg in $MYAPP_PACKAGES; do
 
         FOUND_MYAPP=""
 
-        # 优先检查实际 Package 定义
         while IFS= read -r -d '' mf; do
 
             [ -f "$mf" ] || continue
@@ -676,7 +780,6 @@ for pkg in $MYAPP_PACKAGES; do
                 -print0 2>/dev/null || true
         )
 
-        # luci.mk 类型和多变体包回退到源码目录 Makefile
         if [ -z "$FOUND_MYAPP" ] &&
            [ -f "package/myapp/${pkg}/Makefile" ]; then
 
@@ -701,7 +804,31 @@ for pkg in $MYAPP_PACKAGES; do
 done
 
 ###############################################################################
-# 14. IPQ60xx 内核大小修改 + SKB Recycler
+# 12.1 dae / daed 最终来源检查
+###############################################################################
+
+echo
+echo "========================================"
+echo "dae / daed 最终来源检查"
+echo "========================================"
+
+for pkg in dae daed; do
+
+    SMALL_MAKEFILE="package/feeds/small/${pkg}/Makefile"
+
+    if [ ! -f "$SMALL_MAKEFILE" ]; then
+        echo "ERROR: ${pkg} small 来源丢失"
+        exit 1
+    fi
+
+    echo "✓ ${pkg}"
+    echo "  来源: package/feeds/small/${pkg}"
+    echo "  版本: $(get_package_version "$SMALL_MAKEFILE")"
+
+done
+
+###############################################################################
+# 13. IPQ60xx 内核大小修改 + SKB Recycler
 ###############################################################################
 
 echo
@@ -781,7 +908,7 @@ else
 fi
 
 ###############################################################################
-# 15. DIY2 完成
+# 14. DIY2 完成
 ###############################################################################
 
 echo
