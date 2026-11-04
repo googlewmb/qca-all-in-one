@@ -234,11 +234,14 @@ done
 #   dae  -> feeds/small/dae
 #   daed -> feeds/small/daed
 #
-# 关键修复：
-#   feeds install -a 不会默认覆盖核心包。
-#   必须使用 -f 强制安装，并使用 -p small 指定来源。
+# 处理方式：
+#   1. 检查 small 源码
+#   2. 删除所有 feeds 中已有的同名安装入口
+#   3. 只建立 small 来源软链接
+#   4. 验证实际链接目标
+#   5. 检查 package/myapp 是否存在同名核心包
 #
-# 不允许其他第三方 feeds 或官方 feeds 覆盖。
+# 不允许其他 feeds 覆盖。
 # luci-app-daede 不在本段强制修改范围内。
 ###############################################################################
 
@@ -252,47 +255,31 @@ dae
 daed
 "
 
-echo
-echo "强制从 small feed 安装 dae / daed..."
-
-if ! ./scripts/feeds install -f -p small dae daed; then
-    echo "ERROR: 无法从 small feed 强制安装 dae / daed"
-    echo "请检查 feeds/small 中的软件包索引及 Makefile"
-    exit 1
-fi
+###############################################################################
+# 第一步：确认 small feed 源码存在
+###############################################################################
 
 for pkg in $DAE_CORE_PACKAGES; do
 
-    SMALL_DIR="package/feeds/small/${pkg}"
-    SMALL_MAKEFILE="${SMALL_DIR}/Makefile"
+    SMALL_SOURCE="feeds/small/${pkg}"
 
-    echo
-    echo "检查核心软件包: ${pkg}"
-
-    if [ ! -f "$SMALL_MAKEFILE" ]; then
+    if [ ! -f "${SMALL_SOURCE}/Makefile" ]; then
         echo "ERROR: small feed 中不存在 ${pkg}"
-        echo "检查路径: ${SMALL_MAKEFILE}"
+        echo "检查路径: ${SMALL_SOURCE}/Makefile"
         exit 1
     fi
 
-    SMALL_VERSION="$(get_package_version "$SMALL_MAKEFILE")"
+    echo "确认 small 源码存在: ${SMALL_SOURCE}"
 
-    echo "指定来源: small/${pkg}"
-    echo "软件包版本: ${SMALL_VERSION}"
+done
 
-    # 检查实际链接目标，防止入口指向其他源码
-    SMALL_REAL="$(readlink -f "$SMALL_DIR" 2>/dev/null || true)"
-    FEED_REAL="$(readlink -f "feeds/small/${pkg}" 2>/dev/null || true)"
+###############################################################################
+# 第二步：检查 package/myapp 是否存在同名核心包
+###############################################################################
 
-    if [ -z "$SMALL_REAL" ] || [ "$SMALL_REAL" != "$FEED_REAL" ]; then
-        echo "ERROR: ${pkg} 并未正确指向 feeds/small"
-        echo "package/feeds 路径: ${SMALL_REAL}"
-        echo "feeds/small 路径: ${FEED_REAL}"
-        exit 1
-    fi
+if [ -d package/myapp ]; then
 
-    # 检查 package/myapp 是否存在同名核心包
-    if [ -d "package/myapp" ]; then
+    for pkg in $DAE_CORE_PACKAGES; do
 
         if grep -rqE \
             "^[[:space:]]*define[[:space:]]+Package/${pkg}([[:space:]]|$)" \
@@ -306,37 +293,95 @@ for pkg in $DAE_CORE_PACKAGES; do
 
         fi
 
-    fi
+    done
 
-    # 删除其他第三方 feeds 和官方 feeds 的重复入口
-    for feed in $THIRD_PARTY_FEEDS $OFFICIAL_FEEDS; do
+fi
 
-        [ "$feed" = "small" ] && continue
+###############################################################################
+# 第三步：删除所有 feeds 中已有的 dae / daed 安装入口
+###############################################################################
 
-        if package_entry_exists "$feed" "$pkg"; then
+echo
+echo "清理其他 feeds 中的 dae / daed 安装入口..."
 
-            MAKEFILE="$(package_makefile "$feed" "$pkg")"
-            VERSION="$(get_package_version "$MAKEFILE")"
+for pkg in $DAE_CORE_PACKAGES; do
 
-            echo "发现重复来源:"
-            echo "  ${feed}/${pkg}"
-            echo "  版本: ${VERSION}"
+    for entry in package/feeds/*/"$pkg"; do
 
-            echo "删除重复入口，保留 small/${pkg}"
+        [ -e "$entry" ] || [ -L "$entry" ] || continue
 
-            remove_package_entry "$feed" "$pkg"
+        feed="${entry#package/feeds/}"
+        feed="${feed%%/*}"
 
-        fi
+        echo "删除旧安装入口: ${feed}/${pkg}"
+
+        rm -rf "$entry"
 
     done
 
-    # 最终确认 small 来源
-    if [ ! -f "package/feeds/small/${pkg}/Makefile" ]; then
-        echo "ERROR: ${pkg} 未能锁定 small 来源"
+done
+
+###############################################################################
+# 第四步：只建立 small 来源软链接
+###############################################################################
+
+mkdir -p package/feeds/small
+
+for pkg in $DAE_CORE_PACKAGES; do
+
+    SMALL_SOURCE="feeds/small/${pkg}"
+    SMALL_ENTRY="package/feeds/small/${pkg}"
+
+    if [ -e "$SMALL_ENTRY" ] || [ -L "$SMALL_ENTRY" ]; then
+        rm -rf "$SMALL_ENTRY"
+    fi
+
+    ln -s "../../../feeds/small/${pkg}" "$SMALL_ENTRY"
+
+    if [ ! -f "${SMALL_ENTRY}/Makefile" ]; then
+        echo "ERROR: ${pkg} small 软链接创建失败"
         exit 1
     fi
 
-    echo "✓ ${pkg} 最终来源: package/feeds/small/${pkg}"
+    SMALL_REAL="$(readlink -f "$SMALL_ENTRY" 2>/dev/null || true)"
+    FEED_REAL="$(readlink -f "$SMALL_SOURCE" 2>/dev/null || true)"
+
+    if [ -z "$SMALL_REAL" ] || [ "$SMALL_REAL" != "$FEED_REAL" ]; then
+        echo "ERROR: ${pkg} 实际链接目标不是 feeds/small"
+        echo "安装入口: ${SMALL_REAL}"
+        echo "源码目录: ${FEED_REAL}"
+        exit 1
+    fi
+
+    SMALL_VERSION="$(get_package_version "${SMALL_ENTRY}/Makefile")"
+
+    echo
+    echo "✓ ${pkg}"
+    echo "  指定来源: small/${pkg}"
+    echo "  实际路径: ${SMALL_REAL}"
+    echo "  软件包版本: ${SMALL_VERSION}"
+
+done
+
+###############################################################################
+# 第五步：检查所有其他 feeds，不允许重复入口
+###############################################################################
+
+for pkg in $DAE_CORE_PACKAGES; do
+
+    for entry in package/feeds/*/"$pkg"; do
+
+        [ -e "$entry" ] || [ -L "$entry" ] || continue
+
+        feed="${entry#package/feeds/}"
+        feed="${feed%%/*}"
+
+        [ "$feed" = "small" ] && continue
+
+        echo "ERROR: 发现其他 feed 重复入口: ${feed}/${pkg}"
+        exit 1
+
+    done
 
 done
 
@@ -857,15 +902,18 @@ for pkg in dae daed; do
     echo "  来源: package/feeds/small/${pkg}"
     echo "  版本: $(get_package_version "$SMALL_MAKEFILE")"
 
-    # 确认其他 feeds 没有重复入口
-    for feed in $THIRD_PARTY_FEEDS $OFFICIAL_FEEDS; do
+    # 检查所有 feeds，不允许存在其他同名入口
+    for entry in package/feeds/*/"$pkg"; do
+
+        [ -e "$entry" ] || [ -L "$entry" ] || continue
+
+        feed="${entry#package/feeds/}"
+        feed="${feed%%/*}"
 
         [ "$feed" = "small" ] && continue
 
-        if package_entry_exists "$feed" "$pkg"; then
-            echo "ERROR: 发现其他 feed 重复入口: ${feed}/${pkg}"
-            exit 1
-        fi
+        echo "ERROR: 发现其他 feed 重复入口: ${feed}/${pkg}"
+        exit 1
 
     done
 
