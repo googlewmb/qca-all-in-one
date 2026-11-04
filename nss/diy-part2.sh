@@ -115,6 +115,65 @@ is_enabled()
         .config 2>/dev/null
 }
 
+###############################################################################
+# 2.1 VIKINGYFY UPnP 独立源码优先
+#
+# DIY1 已将以下两个软件包放入 package/myapp：
+#   package/myapp/luci-app-upnp
+#   package/myapp/miniupnpd
+#
+# luci-app-upnp 使用 luci.mk，不一定存在 define Package/luci-app-upnp。
+# miniupnpd 会生成 iptables / nftables 变体，源码目录仍然叫 miniupnpd。
+#
+# 因此这里按源码目录名清理 feed 入口，避免漏掉重复来源。
+###############################################################################
+
+echo
+echo "========================================"
+echo "VIKINGYFY UPnP 独立源码优先"
+echo "========================================"
+
+VIKINGYFY_UPNP_PACKAGES="
+luci-app-upnp
+miniupnpd
+"
+
+for pkg in $VIKINGYFY_UPNP_PACKAGES; do
+
+    MYAPP_DIR="package/myapp/${pkg}"
+
+    if [ ! -f "${MYAPP_DIR}/Makefile" ]; then
+        echo "ERROR: 未找到 DIY1 下载的独立源码：${MYAPP_DIR}/Makefile"
+        exit 1
+    fi
+
+    echo
+    echo "独立源码存在: ${MYAPP_DIR}"
+
+    for feed in $THIRD_PARTY_FEEDS $OFFICIAL_FEEDS; do
+
+        if package_entry_exists "$feed" "$pkg"; then
+
+            MAKEFILE="$(package_makefile "$feed" "$pkg")"
+            VERSION="$(get_package_version "$MAKEFILE")"
+
+            echo "发现重复来源:"
+            echo "  ${feed}/${pkg}"
+            echo "  版本: ${VERSION}"
+            echo "选择: package/myapp/${pkg}"
+
+            remove_package_entry "$feed" "$pkg"
+
+        fi
+
+    done
+
+done
+
+###############################################################################
+# 2.2 明确要求移除的官方依赖入口
+###############################################################################
+
 for pkg in $REMOVE_OFFICIAL_DEPS; do
     [ -n "$pkg" ] || continue
     echo "明确要求：移除官方依赖入口 -> $pkg"
@@ -237,6 +296,36 @@ else
 fi
 
 ###############################################################################
+# 5.1 补充识别 luci.mk 类型和多变体软件包
+#
+# luci-app-upnp 使用 luci.mk，扫描 define Package 的方式可能识别不到。
+# miniupnpd 是源码目录名，其 Makefile 生成多个实际安装包变体。
+# 这里把源码目录名加入优先级清单。
+###############################################################################
+
+for pkg in $VIKINGYFY_UPNP_PACKAGES; do
+
+    if [ -f "package/myapp/${pkg}/Makefile" ]; then
+
+        case "
+$MYAPP_PACKAGES
+" in
+            *"
+$pkg
+"*)
+                ;;
+            *)
+                MYAPP_PACKAGES="$MYAPP_PACKAGES
+$pkg"
+                echo "✓ 补充识别独立源码目录: $pkg"
+                ;;
+        esac
+
+    fi
+
+done
+
+###############################################################################
 # 6. 收集当前 .config 中实际启用的 Package
 ###############################################################################
 
@@ -278,6 +367,7 @@ for pkg in $MYAPP_PACKAGES; do
 
     MYAPP_MAKEFILE=""
 
+    # 优先寻找真正定义 Package/${pkg} 的 Makefile
     while IFS= read -r -d '' mf; do
 
         [ -f "$mf" ] || continue
@@ -297,6 +387,14 @@ for pkg in $MYAPP_PACKAGES; do
             -name Makefile \
             -print0 2>/dev/null || true
     )
+
+    # 对 luci.mk 类型及多变体软件包，回退到源码目录 Makefile
+    if [ -z "$MYAPP_MAKEFILE" ] &&
+       [ -f "package/myapp/${pkg}/Makefile" ]; then
+
+        MYAPP_MAKEFILE="package/myapp/${pkg}/Makefile"
+
+    fi
 
     if [ -n "$MYAPP_MAKEFILE" ]; then
         MYAPP_VERSION="$(get_package_version "$MYAPP_MAKEFILE")"
@@ -557,6 +655,7 @@ for pkg in $MYAPP_PACKAGES; do
 
         FOUND_MYAPP=""
 
+        # 优先检查实际 Package 定义
         while IFS= read -r -d '' mf; do
 
             [ -f "$mf" ] || continue
@@ -577,10 +676,23 @@ for pkg in $MYAPP_PACKAGES; do
                 -print0 2>/dev/null || true
         )
 
+        # luci.mk 类型和多变体包回退到源码目录 Makefile
+        if [ -z "$FOUND_MYAPP" ] &&
+           [ -f "package/myapp/${pkg}/Makefile" ]; then
+
+            FOUND_MYAPP="package/myapp/${pkg}/Makefile"
+
+        fi
+
         if [ -n "$FOUND_MYAPP" ]; then
 
             echo "  package/myapp"
+            echo "  Makefile: $FOUND_MYAPP"
             echo "  version: $(get_package_version "$FOUND_MYAPP")"
+
+        else
+
+            echo "  WARNING: 未找到对应的独立源码 Makefile"
 
         fi
 
