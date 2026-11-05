@@ -94,9 +94,9 @@ CONFIG_WARP_NEW_FW=n
 # 4. DAED / DAE 内核
 # ============================================================
 
-CONFIG_PACKAGE_dae=y
-CONFIG_PACKAGE_daed=y
-CONFIG_PACKAGE_luci-app-daede=y
+CONFIG_PACKAGE_dae=n
+CONFIG_PACKAGE_daed=n
+CONFIG_PACKAGE_luci-app-daede=yn
 
 # DAED 网络组件
 CONFIG_PACKAGE_kmod-veth=y
