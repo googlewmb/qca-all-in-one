@@ -195,10 +195,18 @@ echo 'src-git small https://github.com/kenzok8/small.git' >> feeds.conf.default
 # Modem
 # echo 'src-git modem https://github.com/FUjr/modem_feeds.git' >> feeds.conf.default
 
+###############################################################################
 # rtp2httpd - IPTV 流媒体转发服务
-# 包含主程序、LuCI 管理界面及相关 OpenWrt 软件包
-# 官方仓库：https://github.com/stackia/rtp2httpd
+#
+# 使用 stackia 官方 Feed
+# 云编译通过 feeds update / feeds install 获取软件包
+# 不克隆到 package/myapp
+###############################################################################
+
 echo 'src-git rtp2httpd https://github.com/stackia/rtp2httpd.git;main' >> feeds.conf.default
+
+echo "已添加 rtp2httpd 官方 Feed:"
+echo "https://github.com/stackia/rtp2httpd"
 
 echo "package/myapp:"
 find package/myapp \
