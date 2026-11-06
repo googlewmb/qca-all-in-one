@@ -47,7 +47,7 @@ CONFIG_PACKAGE_luci-app-daede=n
 # ==================== 设备型号 ====================
 
 CONFIG_TARGET_DEVICE_qualcommax_ipq807x_DEVICE_aliyun_ap8220=y
-
+CONFIG_TARGET_DEVICE_qualcommax_ipq807x_DEVICE_qnap_301w=y
 # ==================== 固件镜像 ====================
 
 CONFIG_TARGET_ROOTFS_SQUASHFS=y
