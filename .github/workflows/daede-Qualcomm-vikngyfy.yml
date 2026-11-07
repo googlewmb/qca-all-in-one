@@ -12,7 +12,7 @@ on:
         type: boolean
 
   schedule:
-    - cron: "16 16 * * *"
+    - cron: "16 09 * * *"
 
 env:
   OPENWRT_NAME: Openwrt
