@@ -39,7 +39,7 @@ jobs:
       CONFIG_BUILD: nss/immortalwrt/${{ matrix.config }}
       BUILD_CONFIG_ONLY: ${{ github.event.inputs.BUILD_CONFIG_ONLY || 'false' }}
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
     - name: 释放Ubuntu磁盘空间
