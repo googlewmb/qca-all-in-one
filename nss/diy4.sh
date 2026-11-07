@@ -50,6 +50,10 @@ rm -rf package/passwall-packages package/passwall-luci
 git clone --depth 1 https://github.com/Openwrt-Passwall/openwrt-passwall-packages package/passwall-packages
 git clone --depth 1 https://github.com/Openwrt-Passwall/openwrt-passwall package/passwall-luci
 
+# 拉取 kenzok8 Go 1.27
+rm -rf feeds/packages/lang/golang
+git clone https://github.com/kenzok8/golang -b 1.27 feeds/packages/lang/golang
+
 # 1.3 刷新并注册新拉取的包索引
 echo "更新并安装新依赖索引..."
 
