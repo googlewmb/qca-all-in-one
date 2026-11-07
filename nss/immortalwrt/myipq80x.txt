@@ -15,7 +15,7 @@ CONFIG_TARGET_PER_DEVICE_ROOTFS=y
 
 
 CONFIG_PACKAGE_luci-app-rtp2httpd=y
-
+# CONFIG_PACKAGE_luci-app-router-tool is not set
 
 # ==================== daed 内核 ====================
 
