@@ -4,7 +4,7 @@ CONFIG_TARGET_mediatek_filogic=y
 CONFIG_TARGET_MULTI_PROFILE=n          # 关闭多设备
 # CONFIG_TARGET_PER_DEVICE_ROOTFS is not set
 
-# CONFIG_PACKAGE_luci-app-router-tool is not set
+CONFIG_PACKAGE_luci-app-router-tool=y
 
 CONFIG_PACKAGE_kmod-cryptodev=y
 CONFIG_PACKAGE_kmod-tls=y
