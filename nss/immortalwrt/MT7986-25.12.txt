@@ -10,6 +10,16 @@ CONFIG_FEED_video=n
 # S20P AX6000 device profile
 CONFIG_TARGET_DEVICE_mediatek_filogic_DEVICE_clx_s20p=y
 
+CONFIG_PACKAGE_honk=y
+CONFIG_PACKAGE_luci-app-honk=y
+CONFIG_PACKAGE_v2ray-geoip=y
+CONFIG_PACKAGE_v2ray-geosite=y
+CONFIG_KERNEL_NET_NS=y
+
+
+
+
+
 
 
 CONFIG_PACKAGE_docker-compose=y
