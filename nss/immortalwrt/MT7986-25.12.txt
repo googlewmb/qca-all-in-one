@@ -13,6 +13,31 @@ CONFIG_TARGET_DEVICE_mediatek_filogic_DEVICE_clx_s20p=y
 
 
 
+CONFIG_USE_APK=y
+CONFIG_SIGNED_PACKAGES=y
+CONFIG_SIGN_EACH_PACKAGE=n
+CONFIG_CCACHE=y
+
+CONFIG_BUSYBOX_CUSTOM=y
+CONFIG_BUSYBOX_CONFIG_TELNET=y
+
+CONFIG_PACKAGE_proto-bonding=y
+CONFIG_PACKAGE_kmod-wireguard=y
+CONFIG_PACKAGE_luci-proto-wireguard=y
+CONFIG_PACKAGE_luci-proto-relay=y
+
+CONFIG_PACKAGE_libopenssl-legacy=y
+CONFIG_PACKAGE_default-settings=y
+CONFIG_PACKAGE_default-settings-chn=y
+CONFIG_PACKAGE_coremark=y
+CONFIG_PACKAGE_apk-openssl=y
+CONFIG_PACKAGE_libuci-lua=y
+CONFIG_PACKAGE_curl=y
+
+
+
+
+
 
 CONFIG_PACKAGE_tar=y
 CONFIG_PACKAGE_bzip2=y
