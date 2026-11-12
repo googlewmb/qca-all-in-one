@@ -12,6 +12,35 @@ CONFIG_TARGET_DEVICE_mediatek_filogic_DEVICE_clx_s20p=y
 
 
 
+CONFIG_PACKAGE_docker-compose=y
+CONFIG_PACKAGE_fuse-overlayfs=y
+
+CONFIG_PACKAGE_kmod-crypto-acompress=y
+CONFIG_PACKAGE_kmod-crypto-blake2b=y
+CONFIG_PACKAGE_kmod-crypto-xxhash=y
+
+CONFIG_PACKAGE_kmod-fs-btrfs=y
+CONFIG_PACKAGE_kmod-lib-lzo=y
+CONFIG_PACKAGE_kmod-lib-raid6=y
+CONFIG_PACKAGE_kmod-lib-xor=y
+CONFIG_PACKAGE_kmod-lib-xxhash=y
+CONFIG_PACKAGE_kmod-lib-zlib-deflate=y
+CONFIG_PACKAGE_kmod-lib-zlib-inflate=y
+CONFIG_PACKAGE_kmod-lib-zstd=y
+CONFIG_PACKAGE_kmod-br-netfilter=y
+
+CONFIG_PACKAGE_kmod-nf-nat6=y
+CONFIG_PACKAGE_kmod-nft-queue=y
+CONFIG_PACKAGE_kmod-dummy=y
+CONFIG_PACKAGE_iptables-mod-extra=y
+
+CONFIG_PACKAGE_nftables=y
+CONFIG_PACKAGE_kmod-nft-nat=y
+CONFIG_PACKAGE_kmod-nft-netdev=y
+
+
+
+
 
 CONFIG_USE_APK=y
 CONFIG_SIGNED_PACKAGES=y
