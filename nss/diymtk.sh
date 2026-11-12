@@ -122,6 +122,60 @@ passwall
 
 
 ###############################################################################
+# eMMC-Health
+# 来源：https://github.com/adminchenyu/eMMC-Health
+# LuCI 软件包：luci-app-emmc-health
+# 用于检测 eMMC 品牌、型号、容量、空间使用情况及健康状态
+# 支持 Life Time A/B、Pre EOL、MMC 标准和 EXT_CSD 信息
+# 适用于 iStoreOS / OpenWrt
+###############################################################################
+
+echo
+echo "========================================"
+echo "下载 eMMC-Health"
+echo "========================================"
+
+git clone -b main --depth 1 \
+https://github.com/adminchenyu/eMMC-Health.git \
+luci-app-emmc-health
+
+# 检查软件包 Makefile
+if [ ! -f luci-app-emmc-health/Makefile ]; then
+    echo "ERROR: eMMC-Health Makefile 不存在"
+    exit 1
+fi
+
+# 检查软件包名称
+if ! grep -q '^PKG_NAME:=luci-app-emmc-health$' \
+    luci-app-emmc-health/Makefile; then
+    echo "ERROR: eMMC-Health 软件包名称不正确"
+    exit 1
+fi
+
+# 检查核心程序
+for file in \
+    root/usr/libexec/emmc-health \
+    root/usr/libexec/emmc-health-install-mmc \
+    root/usr/share/luci/menu.d/luci-app-emmc-health.json \
+    root/usr/share/rpcd/acl.d/luci-app-emmc-health.json \
+    htdocs/luci-static/resources/view/emmc-health.js
+do
+    if [ ! -f "luci-app-emmc-health/$file" ]; then
+        echo "ERROR: eMMC-Health 缺少必要文件: $file"
+        exit 1
+    fi
+done
+
+echo
+echo "eMMC-Health 软件包版本信息："
+
+grep -E '^PKG_(NAME|VERSION|RELEASE|ARCH|LICENSE):=' \
+    luci-app-emmc-health/Makefile
+
+echo "eMMC-Health 检查通过"
+
+
+###############################################################################
 # Vantage LuCI 主题 + 仪表盘
 # 来源：https://github.com/anothaDev/luci-theme-vantage
 # 包含：
