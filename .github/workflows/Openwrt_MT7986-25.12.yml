@@ -20,8 +20,8 @@ env:
   REPO_URL: https://github.com/chasey-dev/immortalwrt-mt798x-rebase
   REPO_BRANCH: 25.12
   CONFIG_FILE: nss/immortalwrt/.config
-  DIY_P1_SH: nss/diymtk.sh
-  DIY_P2_SH: nss/diy-part5.sh
+  DIY_P1_SH: nss/diymtk1.sh
+  DIY_P2_SH: nss/diy-part4.sh
   UPLOAD_BIN: true
   UPLOAD_FIRMWARE: true
   UPLOAD_RELEASE: true
