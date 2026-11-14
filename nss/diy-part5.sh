@@ -50,6 +50,29 @@ rm -rf package/passwall-packages package/passwall-luci
 git clone --depth 1 https://github.com/Openwrt-Passwall/openwrt-passwall-packages package/passwall-packages
 git clone --depth 1 https://github.com/Openwrt-Passwall/openwrt-passwall package/passwall-luci
 
+
+echo "==== [diy-part2] 修复 rust download-ci-llvm 404 ===="
+RUST_MK="feeds/packages/lang/rust/Makefile"
+if [ -f "$RUST_MK" ]; then
+  sed -i 's/--set=llvm\.download-ci-llvm=true/--set=llvm.download-ci-llvm=false/' "$RUST_MK"
+  if grep -q 'download-ci-llvm=false' "$RUST_MK"; then
+    echo "    已设置 llvm.download-ci-llvm=false"
+  else
+    echo "    [警告] 未匹配到 download-ci-llvm=true，可能上游已修改或路径变化"
+    grep -n 'download-ci-llvm' "$RUST_MK" || true
+  fi
+else
+  echo "    [警告] 未找到 $RUST_MK，跳过"
+fi
+
+
+
+
+
+
+
+
+
 # 拉取 kenzok8 Go 1.27
 rm -rf feeds/packages/lang/golang
 git clone https://github.com/kenzok8/golang -b 1.27 feeds/packages/lang/golang
