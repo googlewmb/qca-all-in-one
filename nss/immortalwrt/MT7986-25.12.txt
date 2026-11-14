@@ -6,6 +6,32 @@
 
 
 # ============================================================
+# S20P 设备默认附加存储组件
+# ============================================================
+
+# USB 3.0
+CONFIG_PACKAGE_kmod-usb3=y
+
+# MMC / eMMC
+CONFIG_PACKAGE_kmod-mmc=y
+
+# NVMe
+CONFIG_PACKAGE_kmod-nvme=y
+
+# 文件系统驱动
+CONFIG_PACKAGE_kmod-fs-f2fs=y
+CONFIG_PACKAGE_kmod-fs-ext4=y
+CONFIG_PACKAGE_kmod-fs-vfat=y
+
+# F2FS 文件系统工具
+CONFIG_PACKAGE_mkf2fs=y
+CONFIG_PACKAGE_f2fsck=y
+
+
+
+
+
+# ============================================================
 # 1. TARGET / 设备信息
 # ============================================================
 
