@@ -21,7 +21,7 @@ env:
   REPO_BRANCH: 24.10-mtk-k6.6
   CONFIG_FILE: nss/immortalwrt/.config
   DIY_P1_SH: nss/diymtk1.sh
-  DIY_P2_SH: nss/diy-part5.sh
+  DIY_P2_SH: nss/diy-part6.sh
   UPLOAD_BIN: true
   UPLOAD_FIRMWARE: true
   UPLOAD_RELEASE: true
