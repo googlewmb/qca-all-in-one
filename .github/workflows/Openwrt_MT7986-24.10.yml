@@ -17,7 +17,7 @@ on:
 env:
   OPENWRT_NAME: Openwrt
   REPO: googlewmb/qca-all-in-one
-  REPO_URL: https://github.com/padavanonly/immortalwrt-mt798x-6.6
+  REPO_URL: https://github.com/Yuzhii0718/immortalwrt-mt798x-6.6-padavanonly
   REPO_BRANCH: openwrt-24.10-6.6
   CONFIG_FILE: nss/immortalwrt/.config
   DIY_P1_SH: nss/diymtk1.sh
