@@ -1,0 +1,263 @@
+#!/bin/bash
+set -e
+#
+# nss
+# 第三方插件源码
+#
+
+echo "DIY1 - 下载第三方插件"
+
+mkdir -p package/myapp
+cd package/myapp
+
+# OpenClash
+git clone -b master --depth 1 \
+https://github.com/vernesong/OpenClash.git \
+openclash
+
+# HomeProxy
+git clone -b master --depth 1 \
+https://github.com/immortalwrt/homeproxy.git \
+homeproxy
+
+# SmartDNS 核心（官方 OpenWrt 软件包）
+# 上游核心源码：https://github.com/pymumu/smartdns
+# OpenWrt 软件包：https://github.com/pymumu/openwrt-smartdns
+git clone -b master --depth 1 \
+https://github.com/pymumu/openwrt-smartdns.git \
+smartdns
+
+# SmartDNS LuCI 管理界面
+git clone -b master --depth 1 \
+https://github.com/pymumu/luci-app-smartdns.git \
+luci-app-smartdns
+
+# MosDNS
+git clone -b v5 --depth 1 \
+https://github.com/sbwml/luci-app-mosdns.git \
+mosdns
+
+# V2Ray GeoData
+#git clone --depth 1 \
+#https://github.com/sbwml/v2ray-geodata.git \
+#v2ray-geodata
+
+# H68K / jjm2473
+git clone -b master --depth 1 \
+https://github.com/jjm2473/luci-app-oled.git \
+luci-app-oled
+
+git clone -b main --depth 1 \
+https://github.com/jjm2473/lcdsimple.git \
+lcdsimple
+
+git clone -b dev --depth 1 \
+https://github.com/jjm2473/luci-app-diskman.git \
+luci-app-diskman
+
+git clone -b dev7 --depth 1 \
+https://github.com/jjm2473/OpenAppFilter.git \
+OpenAppFilter
+
+# NATMap 后端
+git clone -b master --depth 1 \
+https://github.com/muink/openwrt-natmapt.git \
+natmapt
+
+# STUNTMAN 客户端
+git clone -b master --depth 1 \
+https://github.com/muink/openwrt-stuntman.git \
+stuntman
+
+# NATMap LuCI
+git clone -b master --depth 1 \
+https://github.com/muink/luci-app-natmapt.git \
+luci-app-natmapt
+
+# Lucky
+#git clone -b main --depth 1 \
+#https://github.com/gdy666/luci-app-lucky.git \
+#lucky
+
+# TimeControl
+#git clone -b main --depth 1 \
+#https://github.com/sirpdboy/luci-app-timecontrol.git \
+#timecontrol
+
+# Nikki
+git clone -b main --depth 1 \
+https://github.com/nikkinikki-org/OpenWrt-nikki.git \
+nikki
+
+# Momo
+#git clone -b main --depth 1 \
+#https://github.com/nikkinikki-org/OpenWrt-momo.git \
+#momo
+
+# Aurora
+#git clone -b master --depth 1 \
+#https://github.com/eamonxg/luci-theme-aurora.git \
+#aurora
+
+# HelloWorld
+#git clone -b master --depth 1 \
+#https://github.com/fw876/helloworld.git \
+#helloworld
+
+# PassWall Packages
+git clone -b main --depth 1 \
+https://github.com/Openwrt-Passwall/openwrt-passwall-packages.git \
+passwall-packages
+
+# PassWall
+git clone -b main --depth 1 \
+https://github.com/Openwrt-Passwall/openwrt-passwall.git \
+passwall
+
+# PassWall2
+#git clone -b main --depth 1 \
+#https://github.com/Openwrt-Passwall/openwrt-passwall2.git \
+#passwall2
+
+
+###############################################################################
+# eMMC-Health
+# 来源：https://github.com/adminchenyu/eMMC-Health
+# LuCI 软件包：luci-app-emmc-health
+# 用于检测 eMMC 品牌、型号、容量、空间使用情况及健康状态
+# 支持 Life Time A/B、Pre EOL、MMC 标准和 EXT_CSD 信息
+# 适用于 iStoreOS / OpenWrt
+###############################################################################
+
+echo
+echo "========================================"
+echo "下载 eMMC-Health"
+echo "========================================"
+
+git clone -b main --depth 1 \
+https://github.com/adminchenyu/eMMC-Health.git \
+luci-app-emmc-health
+
+# 检查软件包 Makefile
+if [ ! -f luci-app-emmc-health/Makefile ]; then
+    echo "ERROR: eMMC-Health Makefile 不存在"
+    exit 1
+fi
+
+# 检查软件包名称
+if ! grep -q '^PKG_NAME:=luci-app-emmc-health$' \
+    luci-app-emmc-health/Makefile; then
+    echo "ERROR: eMMC-Health 软件包名称不正确"
+    exit 1
+fi
+
+# 检查核心程序
+for file in \
+    root/usr/libexec/emmc-health \
+    root/usr/libexec/emmc-health-install-mmc \
+    root/usr/share/luci/menu.d/luci-app-emmc-health.json \
+    root/usr/share/rpcd/acl.d/luci-app-emmc-health.json \
+    htdocs/luci-static/resources/view/emmc-health.js
+do
+    if [ ! -f "luci-app-emmc-health/$file" ]; then
+        echo "ERROR: eMMC-Health 缺少必要文件: $file"
+        exit 1
+    fi
+done
+
+echo
+echo "eMMC-Health 软件包版本信息："
+
+grep -E '^PKG_(NAME|VERSION|RELEASE|ARCH|LICENSE):=' \
+    luci-app-emmc-health/Makefile
+
+echo "eMMC-Health 检查通过"
+
+
+###############################################################################
+# Vantage LuCI 主题 + 仪表盘
+# 来源：https://github.com/anothaDev/luci-theme-vantage
+# 包含：
+# luci-theme-vantage 主题
+# luci-app-vantage   实时网络状态仪表盘
+###############################################################################
+
+echo "下载 anothaDev/luci-theme-vantage"
+
+VANTAGE_TMP=".luci-theme-vantage-src"
+
+git clone -b main --depth 1 \
+https://github.com/anothaDev/luci-theme-vantage.git \
+"$VANTAGE_TMP"
+
+# 检查两个软件包目录是否存在
+for pkg in luci-theme-vantage luci-app-vantage; do
+    if [ ! -d "$VANTAGE_TMP/$pkg" ]; then
+        echo "ERROR: Vantage 仓库缺少软件包目录: $pkg"
+        exit 1
+    fi
+
+    if [ -e "$pkg" ] || [ -L "$pkg" ]; then
+        echo "ERROR: 目标目录已存在，拒绝覆盖: package/myapp/$pkg"
+        exit 1
+    fi
+done
+
+# 将两个软件包放到 package/myapp 一级目录
+mv "$VANTAGE_TMP/luci-theme-vantage" ./luci-theme-vantage
+mv "$VANTAGE_TMP/luci-app-vantage" ./luci-app-vantage
+
+# 删除临时仓库
+rm -rf "$VANTAGE_TMP"
+
+echo "已添加 luci-theme-vantage、luci-app-vantage"
+
+cd ../..
+
+echo "添加插件集合源"
+
+# iStore Packages
+#echo 'src-git istore https://github.com/linkease/istore-packages.git;main' >> feeds.conf.default
+
+# NAS Packages
+echo 'src-git nas https://github.com/linkease/nas-packages.git;master' >> feeds.conf.default
+echo 'src-git nas_luci https://github.com/linkease/nas-packages-luci.git;main' >> feeds.conf.default
+
+# jjm2473 Apps
+echo 'src-git jjm2473_apps https://github.com/jjm2473/openwrt-apps.git;main' >> feeds.conf.default
+
+# Kenzok8
+echo 'src-git kenzo https://github.com/kenzok8/openwrt-packages.git' >> feeds.conf.default
+echo 'src-git small https://github.com/kenzok8/small.git' >> feeds.conf.default
+# echo 'src-git small_package https://github.com/kenzok8/small-package.git' >> feeds.conf.default
+
+# Kiddin9
+#echo 'src-git kiddin9 https://github.com/kiddin9/op-packages.git' >> feeds.conf.default
+
+# VIKINGYFY
+# echo 'src-git vikingyfy https://github.com/VIKINGYFY/packages.git' >> feeds.conf.default
+
+# Modem
+# echo 'src-git modem https://github.com/FUjr/modem_feeds.git' >> feeds.conf.default
+
+###############################################################################
+# rtp2httpd - IPTV 流媒体转发服务
+#
+# 使用 stackia 官方 Feed
+# 云编译通过 feeds update / feeds install 获取软件包
+# 不克隆到 package/myapp
+###############################################################################
+
+echo 'src-git rtp2httpd https://github.com/stackia/rtp2httpd.git;main' >> feeds.conf.default
+
+echo "已添加 rtp2httpd 官方 Feed:"
+echo "https://github.com/stackia/rtp2httpd"
+
+echo "package/myapp:"
+find package/myapp \
+    -maxdepth 1 \
+    -mindepth 1 \
+    -type d \
+    -printf '%f\n' | sort
+
+echo "DIY1 OK"
