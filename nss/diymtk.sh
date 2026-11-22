@@ -215,6 +215,50 @@ echo "已添加 luci-theme-vantage、luci-app-vantage"
 
 
 
+###############################################################################
+# dae / daed / luci-app-daede
+# 来源：https://github.com/kenzok8/openwrt-daede
+###############################################################################
+
+echo "下载 kenzok8/openwrt-daede"
+
+DAEDE_TMP=".openwrt-daede-src"
+
+git clone -b main --depth 1 \
+https://github.com/kenzok8/openwrt-daede.git \
+"$DAEDE_TMP"
+
+# 检查所需软件包目录
+for pkg in dae daed luci-app-daede; do
+    if [ ! -d "$DAEDE_TMP/$pkg" ]; then
+        echo "ERROR: openwrt-daede 缺少软件包目录: $pkg"
+        exit 1
+    fi
+
+    if [ -e "$pkg" ] || [ -L "$pkg" ]; then
+        echo "ERROR: 目标目录已存在，拒绝覆盖: package/myapp/$pkg"
+        exit 1
+    fi
+done
+
+# 将三个软件包放到 package/myapp 一级目录
+mv "$DAEDE_TMP/dae" ./dae
+mv "$DAEDE_TMP/daed" ./daed
+mv "$DAEDE_TMP/luci-app-daede" ./luci-app-daede
+
+# 关键：把 ci 目录一起拷过来（dae Makefile 依赖 ../ci/patches/dae-core）
+if [ -d "$DAEDE_TMP/ci" ]; then
+    mkdir -p ./ci
+    cp -a "$DAEDE_TMP/ci/." ./ci/
+    echo "已复制 ci 目录（含 dae 补丁）"
+else
+    echo "WARNING: openwrt-daede 仓库没有 ci 目录"
+fi
+
+# 删除临时仓库
+rm -rf "$DAEDE_TMP"
+
+echo "已添加 dae、daed、luci-app-daede"
 
 
 
