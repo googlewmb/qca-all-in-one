@@ -295,6 +295,17 @@ get_package_version()
     echo "$version"
 }
 
+
+
+
+# 关键：把 ci 目录一起拷过来（dae Makefile 依赖 ../ci/patches/dae-core）
+if [ -d "$DAEDE_TMP/ci" ]; then
+    mkdir -p ./ci
+    cp -a "$DAEDE_TMP/ci/." ./ci/
+    echo "已复制 ci 目录（含 dae 补丁）"
+else
+    echo "WARNING: openwrt-daede 仓库没有 ci 目录"
+fi
 ###############################################################################
 # 2.2 VIKINGYFY UPnP 独立源码优先
 #
